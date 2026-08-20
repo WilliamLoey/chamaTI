@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block titulo %}Erro inesperado{% endblock %}
+
+{% block conteudo %}
+<section class="erro-pagina">
+  <p class="erro-pagina__codigo">500</p>
+  <h1>Erro inesperado</h1>
+  <p>{{ mensagem }}</p>
+  <div class="erro-pagina__acoes">
+    <a class="botao botao--primario" href="{{ url_for('main.inicio') }}">Ir para o início</a>
+    <a class="botao botao--secundario" href="{{ url_for('chamados.listar') }}">Ver meus chamados</a>
+  </div>
+</section>
+{% endblock %}
