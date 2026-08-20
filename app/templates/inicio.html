@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block titulo %}Início{% endblock %}
+
+{% block conteudo %}
+<section class="capa">
+  <h1>Gestão de chamados sem planilha e sem e-mail perdido</h1>
+  <p class="capa__texto">
+    O ChamaTI centraliza a abertura, a triagem, o atendimento e o encerramento dos
+    chamados de suporte técnico, com histórico completo, controle de SLA e
+    indicadores para o gestor.
+  </p>
+  <div class="capa__acoes">
+    <a class="botao botao--primario" href="{{ url_for('auth.login_form') }}">Entrar</a>
+    <a class="botao botao--secundario" href="{{ url_for('auth.cadastro_form') }}">Criar conta</a>
+  </div>
+
+  <div class="cartoes">
+    <article class="cartao">
+      <h2>Protocolo e histórico</h2>
+      <p>Cada chamado recebe um protocolo único e registra todas as interações com
+         data, hora e autor.</p>
+    </article>
+    <article class="cartao">
+      <h2>SLA por prioridade</h2>
+      <p>O prazo de atendimento é calculado a partir da prioridade e o sistema
+         sinaliza os chamados fora do prazo.</p>
+    </article>
+    <article class="cartao">
+      <h2>Painel do gestor</h2>
+      <p>Totais por status e prioridade, tempo médio de atendimento, taxa de SLA e
+         carga por técnico.</p>
+    </article>
+  </div>
+
+  <details class="demo">
+    <summary>Contas de demonstração</summary>
+    <ul>
+      <li><strong>Gestor:</strong> ana.gestora@chamati.dev</li>
+      <li><strong>Técnico:</strong> bruno.tecnico@chamati.dev</li>
+      <li><strong>Solicitante:</strong> diego@chamati.dev</li>
+    </ul>
+    <p>Senha para todas: <code>chamati123</code></p>
+  </details>
+</section>
+{% endblock %}

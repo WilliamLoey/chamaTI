@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+{% block titulo %}Chamados{% endblock %}
+
+{% block conteudo %}
+<div class="pagina-titulo">
+  <h1>Chamados</h1>
+  <a class="botao botao--primario" href="{{ url_for('chamados.novo_form') }}">Abrir chamado</a>
+</div>
+
+{% include "partials/campo_erro.html" %}
+
+<form class="filtros" method="get" action="{{ url_for('chamados.listar') }}">
+  <div class="campo campo--linha">
+    <label for="busca">Buscar</label>
+    <input type="search" id="busca" name="busca" value="{{ filtros.busca }}"
+           placeholder="Protocolo, título ou descrição">
+  </div>
+
+  <div class="campo campo--linha">
+    <label for="status_id">Status</label>
+    <select id="status_id" name="status_id">
+      <option value="">Todos</option>
+      {% for s in status_lista %}
+      <option value="{{ s.id }}" {% if filtros.status_id == s.id %}selected{% endif %}>{{ s.nome }}</option>
+      {% endfor %}
+    </select>
+  </div>
+
+  <div class="campo campo--linha">
+    <label for="prioridade_id">Prioridade</label>
+    <select id="prioridade_id" name="prioridade_id">
+      <option value="">Todas</option>
+      {% for p in prioridades %}
+      <option value="{{ p.id }}" {% if filtros.prioridade_id == p.id %}selected{% endif %}>{{ p.nome }}</option>
+      {% endfor %}
+    </select>
+  </div>
+
+  <div class="campo campo--linha">
+    <label for="data_inicio">De</label>
+    <input type="date" id="data_inicio" name="data_inicio" value="{{ filtros.data_inicio }}">
+  </div>
+
+  <div class="campo campo--linha">
+    <label for="data_fim">Até</label>
+    <input type="date" id="data_fim" name="data_fim" value="{{ filtros.data_fim }}">
+  </div>
+
+  <div class="filtros__acoes">
+    <button class="botao botao--secundario" type="submit">Filtrar</button>
+    <a class="botao botao--texto" href="{{ url_for('chamados.listar') }}">Limpar</a>
+  </div>
+</form>
+
+<p class="resultado-contagem">
+  {{ pagina.total }} chamado(s) encontrado(s).
+  {% if pagina.pages > 1 %}Página {{ pagina.page }} de {{ pagina.pages }}.{% endif %}
+</p>
+
+{% if pagina.items %}
+<div class="tabela-rolagem">
+  <table class="tabela">
+    <caption class="sr-apenas">Lista de chamados</caption>
+    <thead>
+      <tr>
+        <th scope="col">Protocolo</th>
+        <th scope="col">Título</th>
+        <th scope="col">Categoria</th>
+        <th scope="col">Prioridade</th>
+        <th scope="col">Status</th>
+        <th scope="col">Aberto em</th>
+        <th scope="col">Técnico</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for c in pagina.items %}
+      <tr>
+        <td data-rotulo="Protocolo">
+          <a href="{{ url_for('chamados.detalhe', chamado_id=c.id) }}">{{ c.protocolo }}</a>
+          {% if c.sla_estourado and not c.encerrado %}
+          <span class="etiqueta etiqueta--alerta" title="Prazo de atendimento vencido">SLA vencido</span>
+          {% endif %}
+        </td>
+        <td data-rotulo="Título">{{ c.titulo }}</td>
+        <td data-rotulo="Categoria">{{ c.categoria.nome }}</td>
+        <td data-rotulo="Prioridade">
+          <span class="etiqueta etiqueta--{{ c.prioridade.nome|lower }}">{{ c.prioridade.nome }}</span>
+        </td>
+        <td data-rotulo="Status">{{ c.status.nome }}</td>
+        <td data-rotulo="Aberto em">{{ c.data_abertura|data_hora }}</td>
+        <td data-rotulo="Técnico">{{ c.tecnico.nome if c.tecnico else "—" }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% if pagina.pages > 1 %}
+<nav class="paginacao" aria-label="Paginação">
+  {% if pagina.has_prev %}
+  <a class="botao botao--secundario"
+     href="{{ url_for('chamados.listar', pagina=pagina.prev_num, **filtros) }}">Anterior</a>
+  {% endif %}
+  <span>Página {{ pagina.page }} de {{ pagina.pages }}</span>
+  {% if pagina.has_next %}
+  <a class="botao botao--secundario"
+     href="{{ url_for('chamados.listar', pagina=pagina.next_num, **filtros) }}">Próxima</a>
+  {% endif %}
+</nav>
+{% endif %}
+
+{% else %}
+<div class="vazio">
+  <p><strong>Nenhum chamado encontrado.</strong></p>
+  <p>Ajuste os filtros ou abra um novo chamado.</p>
+  <a class="botao botao--primario" href="{{ url_for('chamados.novo_form') }}">Abrir chamado</a>
+</div>
+{% endif %}
+{% endblock %}

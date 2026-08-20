@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block titulo %}Painel de indicadores{% endblock %}
+
+{% block conteudo %}
+<div class="pagina-titulo">
+  <h1>Painel de indicadores</h1>
+  <a class="botao botao--texto" href="{{ url_for('chamados.listar') }}">Ver chamados</a>
+</div>
+
+<section class="indicadores" aria-label="Números gerais">
+  <article class="indicador">
+    <p class="indicador__rotulo">Total de chamados</p>
+    <p class="indicador__valor">{{ dados.total }}</p>
+  </article>
+  <article class="indicador">
+    <p class="indicador__rotulo">Em aberto</p>
+    <p class="indicador__valor">{{ dados.em_aberto }}</p>
+  </article>
+  <article class="indicador">
+    <p class="indicador__rotulo">Tempo médio de atendimento</p>
+    <p class="indicador__valor">{{ dados.tempo_medio_horas }} <span class="indicador__unidade">h</span></p>
+  </article>
+  <article class="indicador">
+    <p class="indicador__rotulo">Dentro do SLA</p>
+    <p class="indicador__valor">{{ dados.taxa_sla }}<span class="indicador__unidade">%</span></p>
+  </article>
+</section>
+
+<div class="graficos">
+  <article class="painel">
+    <h2>Chamados por status</h2>
+    <ul class="barras" data-serie="status">
+      {% for item in dados.por_status %}
+      <li class="barra">
+        <span class="barra__rotulo">{{ item.rotulo }}</span>
+        <span class="barra__trilho">
+          <span class="barra__preenchimento" data-total="{{ item.total }}"></span>
+        </span>
+        <span class="barra__valor">{{ item.total }}</span>
+      </li>
+      {% endfor %}
+    </ul>
+  </article>
+
+  <article class="painel">
+    <h2>Chamados por prioridade</h2>
+    <ul class="barras" data-serie="prioridade">
+      {% for item in dados.por_prioridade %}
+      <li class="barra">
+        <span class="barra__rotulo">{{ item.rotulo }}</span>
+        <span class="barra__trilho">
+          <span class="barra__preenchimento" data-total="{{ item.total }}"></span>
+        </span>
+        <span class="barra__valor">{{ item.total }}</span>
+      </li>
+      {% endfor %}
+    </ul>
+  </article>
+
+  <article class="painel">
+    <h2>Carga por técnico (chamados em aberto)</h2>
+    {% if dados.por_tecnico %}
+    <ul class="barras" data-serie="tecnico">
+      {% for item in dados.por_tecnico %}
+      <li class="barra">
+        <span class="barra__rotulo">{{ item.rotulo }}</span>
+        <span class="barra__trilho">
+          <span class="barra__preenchimento" data-total="{{ item.total }}"></span>
+        </span>
+        <span class="barra__valor">{{ item.total }}</span>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p class="discreto">Nenhum chamado em aberto atribuído no momento.</p>
+    {% endif %}
+  </article>
+</div>
+{% endblock %}

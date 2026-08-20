@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block titulo %}ChamaTI{% endblock %} · ChamaTI</title>
+  <meta name="description" content="ChamaTI — sistema web de gestão de chamados de suporte técnico.">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/estilo.css') }}">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='26'>🛠️</text></svg>">
+</head>
+<body>
+  <a class="pular-para-conteudo" href="#conteudo">Pular para o conteúdo</a>
+
+  <header class="cabecalho">
+    <div class="container cabecalho__interno">
+      <a class="marca" href="{{ url_for('main.inicio') }}">
+        <span class="marca__icone" aria-hidden="true">🛠️</span>
+        <span class="marca__nome">Chama<strong>TI</strong></span>
+      </a>
+
+      {% if usuario %}
+      <button class="menu-alternar" type="button" aria-expanded="false"
+              aria-controls="menu-principal" data-menu-alternar>
+        <span class="sr-apenas">Abrir menu</span>
+        <span aria-hidden="true">☰</span>
+      </button>
+
+      <nav id="menu-principal" class="menu" aria-label="Navegação principal">
+        <a href="{{ url_for('chamados.listar') }}">Chamados</a>
+        <a href="{{ url_for('chamados.novo_form') }}">Abrir chamado</a>
+        {% if usuario.eh_gestor %}
+        <a href="{{ url_for('painel.indicadores') }}">Painel</a>
+        {% endif %}
+        <span class="menu__usuario" title="{{ usuario.email }}">
+          {{ usuario.nome }} · <span class="etiqueta">{{ usuario.rotulo_perfil }}</span>
+        </span>
+        <form method="post" action="{{ url_for('auth.logout') }}">
+          <button class="botao botao--texto" type="submit">Sair</button>
+        </form>
+      </nav>
+      {% endif %}
+    </div>
+  </header>
+
+  <main id="conteudo" class="container conteudo">
+    {% with mensagens = get_flashed_messages(with_categories=true) %}
+      {% if mensagens %}
+        <div class="avisos" role="status" aria-live="polite">
+          {% for categoria, texto in mensagens %}
+            <p class="aviso aviso--{{ categoria }}">{{ texto }}</p>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    {% block conteudo %}{% endblock %}
+  </main>
+
+  <footer class="rodape">
+    <div class="container">
+      <p>ChamaTI · Projeto Integrador Transdisciplinar em Engenharia de Software II · {{ ano_atual }}</p>
+    </div>
+  </footer>
+
+  <script src="{{ url_for('static', filename='js/app.js') }}" defer></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>
