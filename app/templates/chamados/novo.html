@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block titulo %}Abrir chamado{% endblock %}
+
+{% block conteudo %}
+<div class="pagina-titulo">
+  <h1>Abrir chamado</h1>
+  <a class="botao botao--texto" href="{{ url_for('chamados.listar') }}">Voltar</a>
+</div>
+
+{% include "partials/campo_erro.html" %}
+
+<form class="formulario" method="post" action="{{ url_for('chamados.novo') }}"
+      enctype="multipart/form-data" novalidate data-validar-anexo="5">
+  <div class="campo {% if campo_erro == 'titulo' %}campo--invalido{% endif %}">
+    <label for="titulo">Título</label>
+    <input type="text" id="titulo" name="titulo" value="{{ dados.titulo or '' }}"
+           maxlength="120" required>
+    <small class="campo__ajuda">Resuma o problema em uma frase (mínimo de 5 caracteres).</small>
+  </div>
+
+  <div class="campo {% if campo_erro == 'descricao' %}campo--invalido{% endif %}">
+    <label for="descricao">Descrição</label>
+    <textarea id="descricao" name="descricao" rows="6" required>{{ dados.descricao or '' }}</textarea>
+    <small class="campo__ajuda">
+      Explique o que aconteceu, quando começou e o que você já tentou
+      (mínimo de 10 caracteres).
+    </small>
+  </div>
+
+  <div class="campo-duplo">
+    <div class="campo {% if campo_erro == 'categoria_id' %}campo--invalido{% endif %}">
+      <label for="categoria_id">Categoria</label>
+      <select id="categoria_id" name="categoria_id" required>
+        <option value="">Selecione…</option>
+        {% for c in categorias %}
+        <option value="{{ c.id }}" {% if dados.categoria_id == c.id|string %}selected{% endif %}>{{ c.nome }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="campo {% if campo_erro == 'prioridade_id' %}campo--invalido{% endif %}">
+      <label for="prioridade_id">Prioridade</label>
+      <select id="prioridade_id" name="prioridade_id" required>
+        <option value="">Selecione…</option>
+        {% for p in prioridades %}
+        <option value="{{ p.id }}" {% if dados.prioridade_id == p.id|string %}selected{% endif %}>
+          {{ p.nome }} — atendimento em até {{ p.sla_horas }}h
+        </option>
+        {% endfor %}
+      </select>
+    </div>
+  </div>
+
+  <div class="campo {% if campo_erro == 'anexo' %}campo--invalido{% endif %}">
+    <label for="anexo">Anexo <span class="campo__opcional">(opcional)</span></label>
+    <input type="file" id="anexo" name="anexo" multiple>
+    <small class="campo__ajuda">Até 5 MB por arquivo. Prints de tela ajudam muito no atendimento.</small>
+    <p class="campo__erro-inline" data-erro-anexo hidden></p>
+  </div>
+
+  <div class="formulario__acoes">
+    <button class="botao botao--primario" type="submit" data-envio>Abrir chamado</button>
+    <a class="botao botao--texto" href="{{ url_for('chamados.listar') }}">Cancelar</a>
+  </div>
+</form>
+{% endblock %}

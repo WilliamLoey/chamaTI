@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+{% block titulo %}Chamado {{ chamado.protocolo }}{% endblock %}
+
+{% block conteudo %}
+<div class="pagina-titulo">
+  <div>
+    <p class="migalhas"><a href="{{ url_for('chamados.listar') }}">Chamados</a> / {{ chamado.protocolo }}</p>
+    <h1>{{ chamado.titulo }}</h1>
+  </div>
+  <a class="botao botao--texto" href="{{ url_for('chamados.listar') }}">Voltar</a>
+</div>
+
+<div class="detalhe">
+  <section class="detalhe__principal">
+    <article class="painel">
+      <h2>Descrição</h2>
+      <p class="texto-preservado">{{ chamado.descricao }}</p>
+
+      {% if chamado.anexos %}
+      <h3>Anexos</h3>
+      <ul class="lista-anexos">
+        {% for a in chamado.anexos %}
+        <li>{{ a.nome_arquivo }} <span class="discreto">({{ (a.tamanho_bytes / 1024) | round(1) }} KB)</span></li>
+        {% endfor %}
+      </ul>
+      {% endif %}
+
+      {% if chamado.solucao %}
+      <div class="solucao">
+        <h3>Solução aplicada</h3>
+        <p class="texto-preservado">{{ chamado.solucao }}</p>
+      </div>
+      {% endif %}
+    </article>
+
+    <article class="painel">
+      <h2>Histórico</h2>
+      <ol class="linha-tempo">
+        {% for i in chamado.interacoes %}
+        <li class="linha-tempo__item linha-tempo__item--{{ i.tipo }}">
+          <p class="linha-tempo__cabecalho">
+            <strong>{{ i.autor.nome }}</strong>
+            <span class="discreto">{{ i.criado_em|data_hora }}</span>
+          </p>
+          <p class="texto-preservado">{{ i.mensagem }}</p>
+        </li>
+        {% endfor %}
+      </ol>
+
+      <form method="post" action="{{ url_for('chamados.comentar', chamado_id=chamado.id) }}">
+        <div class="campo">
+          <label for="mensagem">Adicionar comentário</label>
+          <textarea id="mensagem" name="mensagem" rows="3" required></textarea>
+        </div>
+        <button class="botao botao--secundario" type="submit">Comentar</button>
+      </form>
+    </article>
+  </section>
+
+  <aside class="detalhe__lateral">
+    <article class="painel">
+      <h2>Dados do chamado</h2>
+      <dl class="lista-dados">
+        <dt>Protocolo</dt><dd>{{ chamado.protocolo }}</dd>
+        <dt>Status</dt><dd>{{ chamado.status.nome }}</dd>
+        <dt>Categoria</dt><dd>{{ chamado.categoria.nome }}</dd>
+        <dt>Prioridade</dt>
+        <dd><span class="etiqueta etiqueta--{{ chamado.prioridade.nome|lower }}">{{ chamado.prioridade.nome }}</span></dd>
+        <dt>Solicitante</dt><dd>{{ chamado.solicitante.nome }}</dd>
+        <dt>Técnico</dt><dd>{{ chamado.tecnico.nome if chamado.tecnico else "Não atribuído" }}</dd>
+        <dt>Aberto em</dt><dd>{{ chamado.data_abertura|data_hora }}</dd>
+        <dt>Prazo (SLA)</dt>
+        <dd>
+          {{ chamado.prazo_sla|data_hora }}
+          {% if chamado.sla_estourado %}
+          <span class="etiqueta etiqueta--alerta">Vencido</span>
+          {% else %}
+          <span class="etiqueta etiqueta--ok">No prazo</span>
+          {% endif %}
+        </dd>
+        {% if chamado.data_encerramento %}
+        <dt>Encerrado em</dt><dd>{{ chamado.data_encerramento|data_hora }}</dd>
+        <dt>Tempo total</dt><dd>{{ chamado.horas_em_aberto }} h</dd>
+        {% endif %}
+      </dl>
+    </article>
+
+    {% if usuario.eh_gestor or usuario.eh_tecnico %}
+    <article class="painel">
+      <h2>Atribuição</h2>
+      <form method="post" action="{{ url_for('chamados.atribuir', chamado_id=chamado.id) }}">
+        <div class="campo">
+          <label for="tecnico_id">Técnico responsável</label>
+          <select id="tecnico_id" name="tecnico_id" required>
+            <option value="">Selecione…</option>
+            {% for t in tecnicos %}
+            <option value="{{ t.id }}" {% if chamado.tecnico_id == t.id %}selected{% endif %}>{{ t.nome }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <button class="botao botao--secundario botao--bloco" type="submit">Atribuir</button>
+      </form>
+    </article>
+    {% endif %}
+
+    {% if transicoes %}
+    <article class="painel">
+      <h2>Mudar status</h2>
+      <form method="post" action="{{ url_for('chamados.mudar_status', chamado_id=chamado.id) }}"
+            data-confirmar="Confirma a alteração de status deste chamado?">
+        <div class="campo">
+          <label for="status">Novo status</label>
+          <select id="status" name="status" required data-status-seletor>
+            {% for t in transicoes %}
+            <option value="{{ t }}">{{ t }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="campo" data-campo-solucao hidden>
+          <label for="solucao">Solução aplicada</label>
+          <textarea id="solucao" name="solucao" rows="4"></textarea>
+          <small class="campo__ajuda">Obrigatório ao resolver: descreva a causa e a correção
+            (mínimo de 10 caracteres).</small>
+        </div>
+
+        <button class="botao botao--primario botao--bloco" type="submit">Atualizar status</button>
+      </form>
+    </article>
+    {% endif %}
+  </aside>
+</div>
+{% endblock %}
