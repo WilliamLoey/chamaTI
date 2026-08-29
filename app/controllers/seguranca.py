@@ -1,8 +1,8 @@
 """Controle de acesso: usuário da sessão e decoradores de permissão.
 
-E-04 do laudo (Colega 4) originou o reforço aqui: a proteção não pode depender
-de o link estar escondido no menu — a verificação acontece no servidor, em toda
-requisição.
+A proteção não pode depender de o link estar escondido no menu: a verificação
+acontece no servidor, em toda requisição. Esconder a opção é usabilidade;
+bloquear no servidor é segurança.
 """
 from functools import wraps
 

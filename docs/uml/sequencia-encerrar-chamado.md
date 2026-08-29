@@ -53,7 +53,7 @@ sequenceDiagram
 
 | Regra | Efeito |
 |---|---|
-| RN04 | Só encerra a partir de *Em atendimento* |
-| RN05 | Solicitante não resolve o próprio chamado |
-| RN06 | Solução com no mínimo 10 caracteres |
-| RN07 | O chamado precisa ser visível para quem age sobre ele |
+| Transições válidas | Só encerra a partir de *Em atendimento* |
+| Permissão de encerramento | Solicitante não resolve o próprio chamado |
+| Solução obrigatória | Mínimo de 10 caracteres |
+| Visibilidade | O chamado precisa ser visível para quem age sobre ele |

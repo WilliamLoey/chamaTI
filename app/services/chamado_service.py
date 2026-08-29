@@ -1,22 +1,28 @@
 """Regras de negócio do ciclo de vida do chamado.
 
-Toda a validação relevante mora aqui — não apenas no front-end. Essa decisão
-veio da correção E-04: o teste do Colega 4 mostrou que a validação feita apenas
-no navegador era contornável.
+Toda a validação relevante mora aqui, e não apenas no front-end: a checagem
+feita no navegador é conveniência para o usuário, nunca garantia. Um envio
+direto, sem passar pela tela, cai nas mesmas regras.
 """
+import os
 from datetime import datetime, time, timedelta, timezone
 
-from sqlalchemy import func
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import joinedload
 
+from app import regras
 from app.extensions import db
 from app.models import Anexo, Categoria, Chamado, Interacao, Prioridade, Status, Usuario
 from app.services.erros import ErroDeNegocio, PermissaoNegada
 
-DESCRICAO_MIN = 10
-TITULO_MIN = 5
-ANEXO_MAX_BYTES = 5 * 1024 * 1024   # E-03
-ITENS_POR_PAGINA = 25               # E-01
+# V-09: os limites vêm de app/regras.py, fonte única de verdade
+TITULO_MIN = regras.TITULO_MIN
+DESCRICAO_MIN = regras.DESCRICAO_MIN
+SOLUCAO_MIN = regras.SOLUCAO_MIN
+COMENTARIO_MIN = regras.COMENTARIO_MIN
+ANEXO_MAX_BYTES = regras.ANEXO_MAX_BYTES
+ANEXO_EXTENSOES = regras.ANEXO_EXTENSOES
+ITENS_POR_PAGINA = regras.ITENS_POR_PAGINA
 
 STATUS_ABERTO = "Aberto"
 STATUS_EM_ATENDIMENTO = "Em atendimento"
@@ -44,7 +50,12 @@ def _status(nome):
 
 
 def gerar_protocolo():
-    """Formato AAAA-NNNNNN, sequencial por ano de abertura."""
+    """Formato AAAA-NNNNNN, sequencial por ano de abertura.
+
+    Atenção: esta função apenas *sugere* o próximo número. Como o valor é lido
+    e só depois gravado, dois pedidos concorrentes podem calcular o mesmo — por
+    isso a gravação é feita com retentativa em `abrir()` (V-05).
+    """
     ano = datetime.now(timezone.utc).year
     prefixo = f"{ano}-"
     ultimo = (Chamado.query
@@ -58,7 +69,7 @@ def gerar_protocolo():
 # --------------------------------------------------------------------- criação
 def validar_dados(titulo, descricao, categoria_id, prioridade_id):
     titulo = _limpar(titulo)
-    descricao = _limpar(descricao)   # E-04: trim antes de medir o tamanho
+    descricao = _limpar(descricao)   # espaços não contam como conteúdo
 
     if len(titulo) < TITULO_MIN:
         raise ErroDeNegocio(
@@ -76,39 +87,75 @@ def validar_dados(titulo, descricao, categoria_id, prioridade_id):
 
 
 def validar_anexo(nome_arquivo, tamanho_bytes):
-    """E-03: o limite é conferido no servidor, com mensagem explícita."""
+    """Confere tamanho e extensão no servidor, com mensagem explícita."""
+    if tamanho_bytes <= 0:
+        raise ErroDeNegocio(f"O arquivo '{nome_arquivo}' está vazio.", campo="anexo")
+
     if tamanho_bytes > ANEXO_MAX_BYTES:
         limite_mb = ANEXO_MAX_BYTES // (1024 * 1024)
         atual_mb = round(tamanho_bytes / (1024 * 1024), 1)
         raise ErroDeNegocio(
             f"O arquivo '{nome_arquivo}' tem {atual_mb} MB e o limite é {limite_mb} MB. "
             "Compacte o arquivo ou envie uma imagem menor.", campo="anexo")
+
+    # V-04: até a versão 1.0 qualquer extensão era aceita, inclusive .exe
+    extensao = os.path.splitext(nome_arquivo)[1].lower()
+    if extensao not in ANEXO_EXTENSOES:
+        permitidas = ", ".join(sorted(e.lstrip(".") for e in ANEXO_EXTENSOES))
+        raise ErroDeNegocio(
+            f"O arquivo '{nome_arquivo}' não é de um tipo aceito. "
+            f"Envie um dos formatos: {permitidas}.", campo="anexo")
     return True
 
 
+MAX_TENTATIVAS_PROTOCOLO = 5
+
+
 def abrir(solicitante, titulo, descricao, categoria_id, prioridade_id, anexos=None):
+    """anexos: lista de (nome_arquivo, conteudo_bytes, tipo_mime)."""
     titulo, descricao = validar_dados(titulo, descricao, categoria_id, prioridade_id)
 
-    chamado = Chamado(
-        protocolo=gerar_protocolo(),
-        titulo=titulo,
-        descricao=descricao,
-        categoria_id=int(categoria_id),
-        prioridade_id=int(prioridade_id),
-        status_id=_status(STATUS_ABERTO).id,
-        solicitante_id=solicitante.id,
-    )
-    db.session.add(chamado)
-    db.session.flush()
+    anexos = anexos or []
+    for nome_arquivo, conteudo, _ in anexos:
+        validar_anexo(nome_arquivo, len(conteudo))
 
-    for nome_arquivo, tamanho in (anexos or []):
-        validar_anexo(nome_arquivo, tamanho)
-        db.session.add(Anexo(chamado_id=chamado.id, nome_arquivo=nome_arquivo,
-                             tamanho_bytes=tamanho))
+    # V-05: dois pedidos simultâneos podiam calcular o mesmo protocolo e quebrar
+    # na constraint UNIQUE. Agora a colisão é detectada e o número recalculado.
+    ultimo_erro = None
+    for _ in range(MAX_TENTATIVAS_PROTOCOLO):
+        try:
+            chamado = Chamado(
+                protocolo=gerar_protocolo(),
+                titulo=titulo,
+                descricao=descricao,
+                categoria_id=int(categoria_id),
+                prioridade_id=int(prioridade_id),
+                status_id=_status(STATUS_ABERTO).id,
+                solicitante_id=solicitante.id,
+            )
+            db.session.add(chamado)
+            db.session.flush()
 
-    registrar(chamado, solicitante, "Chamado aberto pelo solicitante.", tipo="sistema")
-    db.session.commit()
-    return chamado
+            for nome_arquivo, conteudo, tipo_mime in anexos:
+                db.session.add(Anexo(
+                    chamado_id=chamado.id,
+                    nome_arquivo=nome_arquivo,
+                    tipo_mime=tipo_mime or "application/octet-stream",
+                    tamanho_bytes=len(conteudo),
+                    conteudo=conteudo,
+                ))
+
+            registrar(chamado, solicitante, "Chamado aberto pelo solicitante.",
+                      tipo="sistema")
+            db.session.commit()
+            return chamado
+        except IntegrityError as erro:
+            db.session.rollback()
+            ultimo_erro = erro
+
+    raise ErroDeNegocio(
+        "Não foi possível gerar o número de protocolo neste momento. "
+        "Tente enviar novamente em alguns segundos.") from ultimo_erro
 
 
 def registrar(chamado, autor, mensagem, tipo="comentario"):
@@ -120,9 +167,10 @@ def registrar(chamado, autor, mensagem, tipo="comentario"):
 
 def comentar(chamado, autor, mensagem):
     mensagem = _limpar(mensagem)
-    if len(mensagem) < 3:
-        raise ErroDeNegocio("Escreva um comentário com pelo menos 3 caracteres.",
-                            campo="mensagem")
+    if len(mensagem) < COMENTARIO_MIN:
+        raise ErroDeNegocio(
+            f"Escreva um comentário com pelo menos {COMENTARIO_MIN} caracteres.",
+            campo="mensagem")
     if not autor.pode_ver_chamado(chamado):
         raise PermissaoNegada("Você não tem acesso a este chamado.")
     interacao = registrar(chamado, autor, mensagem)
@@ -160,9 +208,9 @@ def mudar_status(chamado, autor, novo_status, solucao=None):
         if autor.eh_solicitante:
             raise PermissaoNegada("Somente o técnico responsável ou o gestor pode resolver "
                                   "um chamado.")
-        if len(_limpar(solucao)) < DESCRICAO_MIN:
+        if len(_limpar(solucao)) < SOLUCAO_MIN:
             raise ErroDeNegocio(
-                f"Descreva a solução aplicada com pelo menos {DESCRICAO_MIN} caracteres "
+                f"Descreva a solução aplicada com pelo menos {SOLUCAO_MIN} caracteres "
                 "antes de encerrar o chamado.", campo="solucao")
         chamado.solucao = _limpar(solucao)
         chamado.data_encerramento = datetime.now(timezone.utc)
@@ -179,12 +227,19 @@ def mudar_status(chamado, autor, novo_status, solucao=None):
 
 # --------------------------------------------------------------------- consulta
 def _fim_do_dia(data):
-    """E-02: o filtro passou a incluir o dia final inteiro do intervalo."""
-    return datetime.combine(data, time.max).replace(tzinfo=timezone.utc)
+    """Fim do dia informado, no fuso do usuário, convertido para UTC.
+
+    V-06: a versão 1.0 tratava a data digitada como se fosse UTC. Um chamado
+    aberto às 23h no Brasil é gravado como 02:00 UTC do dia seguinte, então
+    quem filtrasse por "hoje" não o encontrava.
+    """
+    local = datetime.combine(data, time.max).replace(tzinfo=regras.FUSO_LOCAL)
+    return local.astimezone(timezone.utc)
 
 
 def _inicio_do_dia(data):
-    return datetime.combine(data, time.min).replace(tzinfo=timezone.utc)
+    local = datetime.combine(data, time.min).replace(tzinfo=regras.FUSO_LOCAL)
+    return local.astimezone(timezone.utc)
 
 
 def parse_data(texto):
@@ -201,7 +256,11 @@ def parse_data(texto):
 
 def listar(usuario, pagina=1, status_id=None, categoria_id=None, prioridade_id=None,
            busca=None, data_inicio=None, data_fim=None, por_pagina=ITENS_POR_PAGINA):
-    """Listagem paginada e filtrada. joinedload evita o N+1 detectado no E-01."""
+    """Listagem paginada e filtrada.
+
+    O joinedload traz os relacionamentos numa consulta só: sem ele, exibir 25
+    chamados dispara mais de cem consultas (problema N+1).
+    """
     consulta = (Chamado.query
                 .options(joinedload(Chamado.status),
                          joinedload(Chamado.categoria),

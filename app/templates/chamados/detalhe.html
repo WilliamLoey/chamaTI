@@ -20,7 +20,10 @@
       <h3>Anexos</h3>
       <ul class="lista-anexos">
         {% for a in chamado.anexos %}
-        <li>{{ a.nome_arquivo }} <span class="discreto">({{ (a.tamanho_bytes / 1024) | round(1) }} KB)</span></li>
+        <li>
+          <a href="{{ url_for('chamados.baixar_anexo', chamado_id=chamado.id, anexo_id=a.id) }}">{{ a.nome_arquivo }}</a>
+          <span class="discreto">({{ a.tamanho_legivel }})</span>
+        </li>
         {% endfor %}
       </ul>
       {% endif %}
@@ -48,6 +51,7 @@
       </ol>
 
       <form method="post" action="{{ url_for('chamados.comentar', chamado_id=chamado.id) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <div class="campo">
           <label for="mensagem">Adicionar comentário</label>
           <textarea id="mensagem" name="mensagem" rows="3" required></textarea>
@@ -89,6 +93,7 @@
     <article class="painel">
       <h2>Atribuição</h2>
       <form method="post" action="{{ url_for('chamados.atribuir', chamado_id=chamado.id) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <div class="campo">
           <label for="tecnico_id">Técnico responsável</label>
           <select id="tecnico_id" name="tecnico_id" required>
@@ -108,6 +113,7 @@
       <h2>Mudar status</h2>
       <form method="post" action="{{ url_for('chamados.mudar_status', chamado_id=chamado.id) }}"
             data-confirmar="Confirma a alteração de status deste chamado?">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <div class="campo">
           <label for="status">Novo status</label>
           <select id="status" name="status" required data-status-seletor>

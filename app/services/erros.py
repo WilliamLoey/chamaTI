@@ -10,7 +10,7 @@ class ErroDeNegocio(Exception):
     def __init__(self, mensagem, campo=None):
         super().__init__(mensagem)
         self.mensagem = mensagem
-        self.campo = campo  # permite destacar o campo com problema na tela (E-05)
+        self.campo = campo  # permite destacar o campo com problema na tela
 
 
 class PermissaoNegada(ErroDeNegocio):

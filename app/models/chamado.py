@@ -11,7 +11,7 @@ def agora():
 class Chamado(db.Model):
     __tablename__ = "chamado"
     __table_args__ = (
-        # E-01: índices criados após o teste de desempenho com 200+ registros
+        # Índices que sustentam os filtros e a ordenação padrão da listagem
         db.Index("ix_chamado_status", "status_id"),
         db.Index("ix_chamado_data_abertura", "data_abertura"),
         db.Index("ix_chamado_solicitante", "solicitante_id"),
@@ -103,15 +103,31 @@ class Interacao(db.Model):
 
 
 class Anexo(db.Model):
+    """V-03: até a versão 1.0 esta tabela guardava apenas o nome e o tamanho —
+    o arquivo enviado era descartado. O conteúdo passou a ser gravado na coluna
+    `conteudo`, dentro do próprio banco.
+
+    Guardar no banco, e não em disco, é decisão consciente: a hospedagem
+    gratuita usa sistema de arquivos efêmero, que é apagado a cada reinício do
+    serviço. Para o volume deste projeto (5 MB por arquivo) a escolha é segura.
+    """
+
     __tablename__ = "anexo"
 
     id = db.Column(db.Integer, primary_key=True)
     chamado_id = db.Column(db.Integer, db.ForeignKey("chamado.id"), nullable=False)
     nome_arquivo = db.Column(db.String(255), nullable=False)
+    tipo_mime = db.Column(db.String(100), nullable=False, default="application/octet-stream")
     tamanho_bytes = db.Column(db.Integer, nullable=False)
+    conteudo = db.Column(db.LargeBinary, nullable=False)
     enviado_em = db.Column(db.DateTime, nullable=False, default=agora)
 
     chamado = db.relationship("Chamado", back_populates="anexos")
+
+    @property
+    def tamanho_legivel(self):
+        kb = self.tamanho_bytes / 1024
+        return f"{kb:.1f} KB" if kb < 1024 else f"{kb / 1024:.1f} MB"
 
     def __repr__(self):
         return f"<Anexo {self.nome_arquivo}>"

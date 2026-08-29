@@ -1,9 +1,0 @@
-{# Bloco único de erro de formulário.
-   E-05: a mensagem aparece junto ao topo do formulário E o campo com problema
-   recebe foco automático via JavaScript (data-campo-erro). #}
-{% if erro %}
-<div class="alerta alerta--erro" role="alert" data-campo-erro="{{ campo_erro or '' }}">
-  <strong>Não foi possível continuar.</strong>
-  <span>{{ erro }}</span>
-</div>
-{% endif %}

@@ -2,7 +2,7 @@
 from flask import (Blueprint, flash, redirect, render_template, request,
                    session, url_for)
 
-from app.models import Perfil
+from app.models import Perfil  # noqa: F401
 from app.services import usuario_service
 from app.services.erros import ErroDeNegocio
 
@@ -11,25 +11,26 @@ bp = Blueprint("auth", __name__, url_prefix="/auth")
 
 @bp.get("/cadastro")
 def cadastro_form():
-    return render_template("auth/cadastro.html", perfis=Perfil.ROTULOS, dados={})
+    return render_template("auth/cadastro.html", dados={})
 
 
 @bp.post("/cadastro")
 def cadastro():
     dados = request.form.to_dict()
     try:
-        usuario = usuario_service.cadastrar(
+        # V-01: o perfil NÃO vem do formulário. Quem se cadastra pela tela
+        # pública é sempre Solicitante; técnico e gestor são criados por um
+        # gestor ou pelo comando `flask promover`.
+        usuario = usuario_service.cadastrar_publico(
             nome=dados.get("nome"),
             email=dados.get("email"),
             senha=dados.get("senha"),
-            perfil=dados.get("perfil") or Perfil.SOLICITANTE,
             departamento=dados.get("departamento"),
         )
     except ErroDeNegocio as erro:
-        # E-05: a mensagem volta junto com o campo, para destacá-lo na tela
-        return render_template("auth/cadastro.html", perfis=Perfil.ROTULOS,
-                               dados=dados, erro=erro.mensagem,
-                               campo_erro=erro.campo), 400
+        # A mensagem volta junto com o campo, para destacá-lo na tela
+        return render_template("auth/cadastro.html", dados=dados,
+                               erro=erro.mensagem, campo_erro=erro.campo), 400
 
     session["usuario_id"] = usuario.id
     flash(f"Conta criada. Bem-vindo(a), {usuario.nome}!", "sucesso")

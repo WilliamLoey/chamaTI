@@ -80,8 +80,8 @@ Entidade central do sistema.
 | solucao | TEXT | Mín. 10 caracteres ao resolver (regra da aplicação) | Não | — | Causa e correção aplicada |
 
 **Índices:** `ix_chamado_status`, `ix_chamado_data_abertura`, `ix_chamado_solicitante`,
-`ix_chamado_tecnico`, `ix_chamado_protocolo` — criados após o teste de desempenho
-que originou a correção **E-01** do laudo de qualidade.
+`ix_chamado_tecnico`, `ix_chamado_protocolo` — sustentam os filtros mais usados
+da listagem e a ordenação padrão por data.
 
 ## Tabela `interacao`
 
@@ -104,8 +104,10 @@ Arquivos enviados junto ao chamado.
 |---|---|---|---|---|---|
 | id | SERIAL | > 0 | Sim | PK | Identificador do anexo |
 | chamado_id | INTEGER | FK → chamado(id), ON DELETE CASCADE | Sim | FK | Chamado ao qual pertence |
-| nome_arquivo | VARCHAR(255) | Texto | Sim | — | Nome original do arquivo |
-| tamanho_bytes | INTEGER | > 0 e ≤ 5.242.880 (CHECK) | Sim | — | Tamanho — limite de 5 MB (**E-03**) |
+| nome_arquivo | VARCHAR(255) | Extensão em png, jpg, jpeg, gif, webp, pdf, txt, log, csv (CHECK) | Sim | — | Nome original do arquivo (**V-04**) |
+| tipo_mime | VARCHAR(100) | Padrão `application/octet-stream` | Sim | — | Tipo informado no envio, usado no download |
+| tamanho_bytes | INTEGER | > 0 e ≤ 5.242.880 (CHECK) | Sim | — | Tamanho — limite de 5 MB |
+| conteudo | BYTEA | Binário do arquivo | Sim | — | Conteúdo do anexo (**V-03**) |
 | enviado_em | TIMESTAMPTZ | Padrão `NOW()` | Sim | — | Data do envio |
 
 ## Visão `vw_chamado_sla`
@@ -134,5 +136,6 @@ Visão de leitura usada pelo painel. Calcula, por chamado: `prazo_sla`,
 | Tamanho mínimo do título | 5 caracteres | Serviço + CHECK no banco |
 | Tamanho mínimo da descrição | 10 caracteres (após `trim`) | Serviço + CHECK no banco |
 | Tamanho máximo do anexo | 5 MB | JavaScript + serviço + CHECK no banco |
+| Extensões de anexo permitidas | png, jpg, jpeg, gif, webp, pdf, txt, log, csv | Serviço + CHECK no banco |
 | Itens por página na listagem | 25 | Serviço |
 | Transições de status permitidas | Aberto → Em atendimento/Cancelado; Em atendimento → Resolvido/Aberto/Cancelado; Resolvido → Aberto | Serviço |

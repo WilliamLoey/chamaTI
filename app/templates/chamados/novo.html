@@ -11,6 +11,7 @@
 
 <form class="formulario" method="post" action="{{ url_for('chamados.novo') }}"
       enctype="multipart/form-data" novalidate data-validar-anexo="5">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
   <div class="campo {% if campo_erro == 'titulo' %}campo--invalido{% endif %}">
     <label for="titulo">Título</label>
     <input type="text" id="titulo" name="titulo" value="{{ dados.titulo or '' }}"

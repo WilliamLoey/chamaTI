@@ -81,9 +81,7 @@ def test_abrir_chamado_invalido_devolve_400(client, solicitante, categoria, prio
     assert Chamado.query.count() == 0
 
 
-def test_regressao_e04_painel_e_bloqueado_para_solicitante_via_url(client, solicitante,
-                                                                   autenticar):
-    """E-04 (Colega 4): tentativa de acesso direto pela URL a uma área restrita."""
+def test_painel_e_bloqueado_para_solicitante_via_url(client, solicitante, autenticar):
     autenticar(solicitante.email)
     resposta = client.get("/painel/")
     assert resposta.status_code == 403
