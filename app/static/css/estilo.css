@@ -274,8 +274,8 @@ a:hover { color: var(--cor-primaria-escura); }
           gap: 10px; padding-bottom: 12px; }
   .menu.menu--aberto { display: flex; }
 
-  /* Tabela vira lista de cartões — o teste em celular (E-05/Colega 3) mostrou
-     que a rolagem horizontal prejudicava a leitura. */
+  /* Em telas estreitas a tabela vira lista de cartões: rolagem horizontal
+     em tabela larga é o pior padrão de leitura no celular. */
   .tabela thead { display: none; }
   .tabela, .tabela tbody, .tabela tr, .tabela td { display: block; width: 100%; }
   .tabela tr { border-bottom: 8px solid var(--cor-fundo); padding: 6px 0; }

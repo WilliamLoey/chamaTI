@@ -30,7 +30,7 @@
     });
   }
 
-  /* E-05: rola até o campo com problema e coloca o foco nele ---------------- */
+  /* Rola até o campo com problema e coloca o foco nele --------------------- */
   function focarCampoComErro() {
     const alerta = document.querySelector("[data-campo-erro]");
     if (!alerta) return;
@@ -45,7 +45,7 @@
     campo.focus({ preventScroll: true });
   }
 
-  /* E-03: avisa sobre o tamanho do anexo antes de enviar -------------------- */
+  /* Avisa sobre o tamanho do anexo antes de enviar -------------------------- */
   function validarAnexo() {
     const form = document.querySelector("[data-validar-anexo]");
     if (!form) return;
