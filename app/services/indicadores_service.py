@@ -1,7 +1,7 @@
 """Indicadores do painel do gestor.
 
-Todos os números saem de agregações no banco (COUNT/AVG), não de laços em
-Python — decisão tomada na correção E-01, de desempenho.
+Todos os números saem de agregações no banco (COUNT/AVG), e não de laços em
+Python: o custo passa a não depender do volume de chamados.
 """
 from sqlalchemy import func
 
