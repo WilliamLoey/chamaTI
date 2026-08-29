@@ -76,14 +76,14 @@ CREATE TABLE chamado (
     data_abertura     TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
     data_encerramento TIMESTAMPTZ,
     solucao           TEXT,
-    -- E-04: a descrição precisa ter conteúdo real, não apenas espaços
+    -- A descrição precisa ter conteúdo real, não apenas espaços
     CONSTRAINT ck_chamado_descricao_minima CHECK (length(trim(descricao)) >= 10),
     CONSTRAINT ck_chamado_titulo_minimo    CHECK (length(trim(titulo))    >= 5),
     CONSTRAINT ck_chamado_encerramento     CHECK (data_encerramento IS NULL
                                                   OR data_encerramento >= data_abertura)
 );
 
--- E-01: índices criados após o teste de desempenho com mais de 200 registros
+-- Índices que sustentam os filtros e a ordenação padrão da listagem
 CREATE INDEX ix_chamado_status        ON chamado (status_id);
 CREATE INDEX ix_chamado_data_abertura ON chamado (data_abertura DESC);
 CREATE INDEX ix_chamado_solicitante   ON chamado (solicitante_id);
@@ -110,11 +110,18 @@ CREATE TABLE anexo (
     id             SERIAL PRIMARY KEY,
     chamado_id     INTEGER      NOT NULL REFERENCES chamado (id) ON DELETE CASCADE,
     nome_arquivo   VARCHAR(255) NOT NULL,
+    tipo_mime      VARCHAR(100) NOT NULL DEFAULT 'application/octet-stream',
     tamanho_bytes  INTEGER      NOT NULL,
+    -- V-03: o conteúdo do arquivo passou a ser armazenado. Na versão 1.0 só o
+    -- nome e o tamanho eram gravados, e o arquivo enviado era descartado.
+    conteudo       BYTEA        NOT NULL,
     enviado_em     TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
-    -- E-03: o limite de 5 MB também é garantido pelo banco
+    -- O limite de 5 MB é garantido pelo banco, além da aplicação
     CONSTRAINT ck_anexo_tamanho CHECK (tamanho_bytes > 0
-                                       AND tamanho_bytes <= 5242880)
+                                       AND tamanho_bytes <= 5242880),
+    -- V-04: apenas formatos usados como evidência de chamado
+    CONSTRAINT ck_anexo_extensao CHECK (
+        lower(nome_arquivo) ~ '\.(png|jpg|jpeg|gif|webp|pdf|txt|log|csv)$')
 );
 
 CREATE INDEX ix_anexo_chamado ON anexo (chamado_id);
