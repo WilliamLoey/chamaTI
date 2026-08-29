@@ -149,7 +149,7 @@ PostgreSQL 16.
 
 | Decisão | Motivo |
 |---|---|
-| `TIMESTAMPTZ` em vez de `TIMESTAMP` | O cálculo de SLA e o filtro por período dependem de fuso; o defeito E-02 do laudo nasceu exatamente de comparação de datas sem fuso |
+| `TIMESTAMPTZ` em vez de `TIMESTAMP` | O cálculo de SLA e o filtro por período dependem de fuso horário (ver defeito V-06 em `docs/verificacao-v1.md`) |
 | `SERIAL` para chaves | Simples, sequencial e legível na depuração |
 | `TEXT` para descrição e solução | O tamanho é imprevisível; `VARCHAR(n)` só criaria um limite arbitrário |
 | `VARCHAR(20)` para o protocolo | Formato fixo `AAAA-NNNNNN` |
@@ -158,9 +158,10 @@ PostgreSQL 16.
 
 | Restrição | Regra que protege |
 |---|---|
-| `ck_chamado_descricao_minima` | RN02 — descrição real, não espaços em branco |
-| `ck_chamado_titulo_minimo` | RN01 |
-| `ck_anexo_tamanho` | RN03 — limite de 5 MB |
+| `ck_chamado_descricao_minima` | Descrição real, com no mínimo 10 caracteres — não apenas espaços |
+| `ck_anexo_extensao` | Apenas formatos de evidência (V-04) |
+| `ck_chamado_titulo_minimo` | Título com no mínimo 5 caracteres |
+| `ck_anexo_tamanho` | Anexo de no máximo 5 MB |
 | `ck_chamado_encerramento` | Encerramento nunca anterior à abertura |
 | `ck_usuario_perfil` | Apenas os três perfis previstos |
 | `ON DELETE RESTRICT` nos domínios | Impede apagar uma categoria em uso |
@@ -182,9 +183,9 @@ linha de defesa contra qualquer caminho que não passe pela aplicação.
 | `ix_interacao_chamado (chamado_id, criado_em)` | Histórico já vem ordenado |
 
 Estes índices, somados à paginação e ao carregamento antecipado dos
-relacionamentos (`joinedload`, que elimina o problema N+1), reduziram o tempo
-da listagem de **6,2 s para 0,4 s** com 200 chamados — correção **E-01** do
-laudo de qualidade.
+relacionamentos (`joinedload`, que elimina o problema N+1), mantêm a listagem
+rápida conforme a base cresce: sem eles, exibir uma página de 25 chamados
+dispara mais de cem consultas ao banco.
 
 ## 4. Como aplicar
 
