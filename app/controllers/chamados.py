@@ -1,6 +1,9 @@
 """Controller dos chamados: listagem, abertura, detalhe e mudanças de estado."""
-from flask import (Blueprint, abort, flash, redirect, render_template, request,
-                   url_for)
+import io
+
+from flask import (Blueprint, flash, redirect, render_template, request,
+                   send_file, url_for)
+from werkzeug.utils import secure_filename
 
 from app.controllers.seguranca import (gestor_ou_tecnico, login_obrigatorio,
                                        usuario_atual)
@@ -65,14 +68,15 @@ def novo_form():
 @login_obrigatorio
 def novo():
     dados = request.form.to_dict()
+    # V-03: o conteúdo do arquivo passou a ser lido e persistido, em vez de
+    # apenas o nome e o tamanho.
     anexos = []
     for arquivo in request.files.getlist("anexo"):
         if not arquivo or not arquivo.filename:
             continue
-        arquivo.stream.seek(0, 2)
-        tamanho = arquivo.stream.tell()
-        arquivo.stream.seek(0)
-        anexos.append((arquivo.filename, tamanho))
+        anexos.append((secure_filename(arquivo.filename),
+                       arquivo.read(),
+                       arquivo.mimetype))
 
     try:
         chamado = chamado_service.abrir(
@@ -113,6 +117,32 @@ def detalhe(chamado_id):
                            transicoes=sorted(
                                chamado_service.TRANSICOES.get(chamado.status.nome, set())),
                            **_dominios())
+
+
+@bp.get("/<int:chamado_id>/anexo/<int:anexo_id>")
+@login_obrigatorio
+def baixar_anexo(chamado_id, anexo_id):
+    """V-03: agora existe de fato o que baixar.
+
+    A permissão é conferida contra o chamado — não basta adivinhar o id do
+    anexo para obter o arquivo de outra pessoa.
+    """
+    try:
+        chamado = chamado_service.obter(chamado_id, usuario_atual())
+    except PermissaoNegada as erro:
+        return render_template("erros/403.html", mensagem=erro.mensagem), 403
+    except ErroDeNegocio as erro:
+        return render_template("erros/404.html", mensagem=erro.mensagem), 404
+
+    anexo = next((a for a in chamado.anexos if a.id == anexo_id), None)
+    if anexo is None:
+        return render_template("erros/404.html",
+                               mensagem="Anexo não encontrado neste chamado."), 404
+
+    return send_file(io.BytesIO(anexo.conteudo),
+                     mimetype=anexo.tipo_mime,
+                     as_attachment=True,
+                     download_name=anexo.nome_arquivo)
 
 
 @bp.post("/<int:chamado_id>/comentar")
