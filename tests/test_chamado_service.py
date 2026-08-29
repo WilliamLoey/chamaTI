@@ -1,8 +1,4 @@
-"""Testes das regras de negócio do chamado.
-
-Vários testes aqui são de regressão: nasceram de defeitos encontrados pelos
-colegas testadores e registrados no laudo de qualidade (E-01 a E-05).
-"""
+"""Testes das regras de negócio do chamado."""
 from datetime import datetime, timedelta, timezone
 
 import pytest
@@ -37,9 +33,8 @@ def test_protocolos_sao_sequenciais_e_unicos(app, solicitante, categoria, priori
     assert int(segundo.protocolo.split("-")[1]) == int(primeiro.protocolo.split("-")[1]) + 1
 
 
-def test_regressao_e04_descricao_so_com_espacos_e_recusada(app, solicitante, categoria,
+def test_descricao_so_com_espacos_e_recusada(app, solicitante, categoria,
                                                            prioridade):
-    """E-04 (Colega 4): o registro era aceito com a descrição em branco."""
     with pytest.raises(ErroDeNegocio) as excecao:
         chamado_service.abrir(solicitante, "Título válido aqui", "            ",
                               categoria.id, prioridade.id)
@@ -61,13 +56,12 @@ def test_categoria_inexistente_e_recusada(app, solicitante, prioridade):
     assert excecao.value.campo == "categoria_id"
 
 
-def test_regressao_e03_anexo_acima_do_limite_e_recusado(app, solicitante, categoria, prioridade):
-    """E-03 (Colega 1): o upload travava sem mensagem."""
+def test_anexo_acima_do_limite_e_recusado(app, solicitante, categoria, prioridade):
     grande = 6 * 1024 * 1024
     with pytest.raises(ErroDeNegocio) as excecao:
         chamado_service.abrir(solicitante, "Título válido", "Descrição bem detalhada aqui.",
                               categoria.id, prioridade.id,
-                              anexos=[("print-da-tela.png", grande)])
+                              anexos=[("print-da-tela.png", b"x" * grande, "image/png")])
     assert excecao.value.campo == "anexo"
     assert "5 MB" in excecao.value.mensagem
 
@@ -75,7 +69,8 @@ def test_regressao_e03_anexo_acima_do_limite_e_recusado(app, solicitante, catego
 def test_anexo_dentro_do_limite_e_aceito(app, solicitante, categoria, prioridade):
     chamado = chamado_service.abrir(
         solicitante, "Título válido", "Descrição bem detalhada aqui.",
-        categoria.id, prioridade.id, anexos=[("print.png", 1024 * 500)])
+        categoria.id, prioridade.id,
+        anexos=[("print.png", b"x" * (1024 * 500), "image/png")])
     assert len(chamado.anexos) == 1
 
 
@@ -158,8 +153,7 @@ def test_reabertura_limpa_encerramento(app, solicitante, tecnico, gestor,
 
 
 # ---------------------------------------------------------------------- consulta
-def test_regressao_e02_filtro_inclui_o_dia_final(app, db, solicitante, categoria, prioridade):
-    """E-02 (Colega 2): chamados abertos no último dia do intervalo sumiam."""
+def test_filtro_inclui_o_dia_final(app, db, solicitante, categoria, prioridade):
     chamado = abrir_chamado(solicitante, categoria, prioridade)
     hoje = datetime.now(timezone.utc)
     chamado.data_abertura = hoje.replace(hour=23, minute=50, second=0, microsecond=0)
@@ -179,8 +173,7 @@ def test_filtro_por_periodo_exclui_fora_do_intervalo(app, db, solicitante, categ
     assert chamado_service.listar(solicitante, data_inicio=ontem, data_fim=hoje).total == 0
 
 
-def test_regressao_e01_listagem_e_paginada(app, solicitante, categoria, prioridade):
-    """E-01 (Colega 5): a listagem trazia todos os registros de uma vez."""
+def test_listagem_e_paginada(app, solicitante, categoria, prioridade):
     for i in range(30):
         abrir_chamado(solicitante, categoria, prioridade, titulo=f"Chamado de teste {i}")
 

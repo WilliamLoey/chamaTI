@@ -68,6 +68,11 @@ def tecnico(app):
 
 
 @pytest.fixture
+def outro_tecnico(app):
+    return _novo_usuario("Carla Menezes", "carla@teste.dev", Perfil.TECNICO)
+
+
+@pytest.fixture
 def gestor(app):
     return _novo_usuario("Ana Ribeiro", "ana@teste.dev", Perfil.GESTOR)
 

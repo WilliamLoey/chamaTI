@@ -7,8 +7,7 @@ from app.services.erros import ErroDeNegocio
 
 
 def test_cadastro_valido_cria_usuario_com_senha_criptografada(app):
-    usuario = usuario_service.cadastrar("Maria Silva", "Maria@Teste.dev ", "senha123",
-                                        Perfil.SOLICITANTE)
+    usuario = usuario_service.cadastrar_publico("Maria Silva", "Maria@Teste.dev ", "senha123")
 
     assert usuario.id is not None
     assert usuario.email == "maria@teste.dev"          # normalizado para minúsculas
@@ -18,19 +17,19 @@ def test_cadastro_valido_cria_usuario_com_senha_criptografada(app):
 
 def test_cadastro_recusa_email_invalido(app):
     with pytest.raises(ErroDeNegocio) as excecao:
-        usuario_service.cadastrar("Maria Silva", "maria-sem-arroba", "senha123")
+        usuario_service.cadastrar_publico("Maria Silva", "maria-sem-arroba", "senha123")
     assert excecao.value.campo == "email"
 
 
 def test_cadastro_recusa_senha_curta(app):
     with pytest.raises(ErroDeNegocio) as excecao:
-        usuario_service.cadastrar("Maria Silva", "maria@teste.dev", "123")
+        usuario_service.cadastrar_publico("Maria Silva", "maria@teste.dev", "123")
     assert excecao.value.campo == "senha"
 
 
 def test_cadastro_recusa_email_duplicado(app, solicitante):
     with pytest.raises(ErroDeNegocio) as excecao:
-        usuario_service.cadastrar("Outro Nome", solicitante.email, "senha123")
+        usuario_service.cadastrar_publico("Outro Nome", solicitante.email, "senha123")
     assert excecao.value.campo == "email"
 
 
