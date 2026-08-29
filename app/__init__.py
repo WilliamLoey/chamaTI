@@ -11,7 +11,7 @@ from datetime import datetime, timezone
 from flask import Flask, render_template
 
 from app.config import get_config
-from app.extensions import db
+from app.extensions import csrf, db
 
 
 def create_app(config_nome=None):
@@ -20,6 +20,7 @@ def create_app(config_nome=None):
     app.config["MAX_CONTENT_LENGTH"] = 16 * 1024 * 1024  # trava de borda do servidor
 
     db.init_app(app)
+    csrf.init_app(app)
 
     from app.controllers import auth, chamados, main, painel
     app.register_blueprint(main.bp)
