@@ -2,6 +2,8 @@
 import os
 from pathlib import Path
 
+from app import regras
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
@@ -18,15 +20,20 @@ class Config:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_ENGINE_OPTIONS = {"pool_pre_ping": True}
 
-    # Regras de negócio parametrizáveis
-    DESCRICAO_MIN = 10          # E-04: tamanho mínimo da descrição do chamado
-    ANEXO_MAX_MB = 5            # E-03: limite de upload
-    ITENS_POR_PAGINA = 25       # E-01: paginação da listagem
-    SENHA_MIN = 6
+    # V-02: proteção CSRF em todos os formulários
+    WTF_CSRF_ENABLED = True
+    WTF_CSRF_TIME_LIMIT = None
 
-    @property
-    def ANEXO_MAX_BYTES(self):
-        return self.ANEXO_MAX_MB * 1024 * 1024
+    # As regras de negócio moram em app/regras.py (fonte única).
+    # Expostas aqui apenas para leitura nos templates via config[...].
+    # V-08: eram declaradas com @property, o que fazia o Flask guardar o
+    # objeto property em vez do número.
+    TITULO_MIN = regras.TITULO_MIN
+    DESCRICAO_MIN = regras.DESCRICAO_MIN
+    ANEXO_MAX_MB = regras.ANEXO_MAX_MB
+    ANEXO_MAX_BYTES = regras.ANEXO_MAX_BYTES
+    ITENS_POR_PAGINA = regras.ITENS_POR_PAGINA
+    SENHA_MIN = regras.SENHA_MIN
 
 
 class DevelopmentConfig(Config):
@@ -38,6 +45,9 @@ class DevelopmentConfig(Config):
 
 class TestingConfig(Config):
     TESTING = True
+    # Desligado nos testes para que eles exercitem as regras de negócio, e não
+    # o mecanismo de token. A proteção em si é verificada em test_seguranca.py,
+    # que liga o CSRF explicitamente.
     WTF_CSRF_ENABLED = False
     SQLALCHEMY_DATABASE_URI = "sqlite:///:memory:"
 
