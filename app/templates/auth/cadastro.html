@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "partials/macros.html" import erro_do_campo %}
 {% block titulo %}Criar conta{% endblock %}
 
 {% block conteudo %}
@@ -12,12 +13,14 @@
       <label for="nome">Nome completo</label>
       <input type="text" id="nome" name="nome" value="{{ dados.nome or '' }}"
              autocomplete="name" required>
+      {{ erro_do_campo('nome', campo_erro, erro) }}
     </div>
 
     <div class="campo {% if campo_erro == 'email' %}campo--invalido{% endif %}">
       <label for="email">E-mail corporativo</label>
       <input type="email" id="email" name="email" value="{{ dados.email or '' }}"
              autocomplete="email" required>
+      {{ erro_do_campo('email', campo_erro, erro) }}
     </div>
 
     <div class="campo {% if campo_erro == 'senha' %}campo--invalido{% endif %}">
@@ -25,6 +28,7 @@
       <input type="password" id="senha" name="senha" autocomplete="new-password"
              minlength="6" required>
       <small class="campo__ajuda">Use pelo menos 6 caracteres.</small>
+      {{ erro_do_campo('senha', campo_erro, erro) }}
     </div>
 
     <div class="campo">

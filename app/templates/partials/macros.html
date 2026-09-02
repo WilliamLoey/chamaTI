@@ -1,0 +1,13 @@
+{# L-05: a mensagem de erro aparecia só no topo da página. Em formulário longo
+   o usuário lia o aviso, rolava para baixo e não sabia qual campo recusar.
+   A mesma mensagem passa a ser repetida ao lado do campo responsável, e o
+   campo recebe destaque visual forte (borda vermelha grossa e barra lateral).
+   O bloco do topo continua existindo — é ele que os leitores de tela anunciam
+   primeiro e é ele que o JavaScript usa para dar foco ao campo. #}
+{% macro erro_do_campo(nome, campo_erro, erro) -%}
+  {%- if erro and campo_erro == nome %}
+  <p class="campo__erro-inline" id="erro-{{ nome }}">
+    <span class="campo__erro-icone" aria-hidden="true">!</span>{{ erro }}
+  </p>
+  {%- endif %}
+{%- endmacro %}
