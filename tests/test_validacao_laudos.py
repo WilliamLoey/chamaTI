@@ -314,3 +314,163 @@ def test_l05_formulario_sem_erro_nao_mostra_mensagem_inline(client, autenticar,
     html = client.get("/chamados/novo").get_data(as_text=True)
     assert 'id="erro-titulo"' not in html
     assert 'id="erro-descricao"' not in html
+
+
+# ---------------------------------------------------------------------- L-06
+# Diferente das cinco anteriores, esta não veio de um formulário: apareceu
+# depois, ao cancelar um chamado durante a revisão das correções. O sintoma era
+# grosseiro — a listagem e o painel devolviam 500.
+#
+# Causa: só o caminho 'Resolvido' gravava `data_encerramento`. 'Cancelado'
+# também encerra o chamado (Status.encerra é True), mas deixava a data nula, e
+# `sla_estourado` comparava None com o prazo, estourando TypeError em toda tela
+# que percorre chamados encerrados.
+#
+# A correção tem duas metades, e cada uma precisa do seu teste: o serviço passou
+# a gravar a data em qualquer status que encerra, e o model passou a tolerar a
+# data ausente — necessário porque os chamados cancelados antes da correção
+# continuam no banco com o campo nulo.
+#
+# Dos dez testes abaixo, sete falham na versão anterior à correção. Os outros
+# três — data de 'Resolvido' não sobrescrita, reabertura e cancelamento
+# terminal — passam nas duas versões de propósito: eles não reproduzem o
+# defeito, guardam o que a correção não podia quebrar ao generalizar as duas
+# condições que antes citavam 'Resolvido' pelo nome.
+
+def _cancelar(chamado, autor):
+    chamado_service.mudar_status(chamado, autor, "Cancelado")
+    return chamado
+
+
+def _legado_sem_data_de_encerramento(chamado, autor):
+    """Reproduz uma linha gravada antes da correção: encerrada, data nula."""
+    _cancelar(chamado, autor)
+    chamado.data_encerramento = None
+    from app.extensions import db
+    db.session.commit()
+    assert chamado.encerrado and chamado.data_encerramento is None
+    return chamado
+
+
+def test_l06_cancelar_registra_a_data_de_encerramento(app, solicitante, tecnico,
+                                                      categoria, prioridade):
+    """O que o serviço deixava de fazer: cancelar encerra, logo tem de datar."""
+    chamado = _cancelar(abrir(solicitante, categoria, prioridade), tecnico)
+
+    assert chamado.status.nome == "Cancelado"
+    assert chamado.encerrado
+    assert chamado.data_encerramento is not None
+
+
+def test_l06_cancelar_em_atendimento_tambem_data(app, solicitante, tecnico,
+                                                  categoria, prioridade):
+    """O cancelamento tem duas origens no fluxo — 'Aberto' e 'Em atendimento'.
+    A do meio do atendimento é a que o testador percorreu."""
+    chamado = abrir(solicitante, categoria, prioridade)
+    chamado_service.mudar_status(chamado, tecnico, "Em atendimento")
+    _cancelar(chamado, tecnico)
+
+    assert chamado.data_encerramento is not None
+
+
+def test_l06_resolver_nao_teve_a_data_sobrescrita(app, solicitante, tecnico,
+                                                  categoria, prioridade):
+    """A regra nova roda depois do bloco de 'Resolvido'. A guarda
+    `is None` existe para ela não carimbar por cima da data já gravada."""
+    chamado = abrir(solicitante, categoria, prioridade)
+    chamado_service.mudar_status(chamado, tecnico, "Em atendimento")
+    chamado_service.mudar_status(chamado, tecnico, "Resolvido",
+                                 solucao="Troquei o cabo de rede da impressora.")
+    gravada = chamado.data_encerramento
+
+    assert gravada is not None
+    assert chamado.status.nome == "Resolvido"
+    # a data é a do encerramento real, não um segundo carimbo posterior
+    assert chamado.data_encerramento == gravada
+
+
+def test_l06_sla_de_encerrado_sem_data_nao_estoura_typeerror(app, solicitante, tecnico,
+                                                             categoria, prioridade):
+    """A metade do model: linha antiga, cancelada sem data. Antes, esta linha
+    levantava TypeError ao comparar None com o prazo."""
+    chamado = _legado_sem_data_de_encerramento(
+        abrir(solicitante, categoria, prioridade), tecnico)
+
+    assert chamado.sla_estourado is False        # dentro do prazo, não explode
+    assert isinstance(chamado.horas_em_aberto, float)
+
+
+def test_l06_encerrado_sem_data_conta_ate_agora(app, solicitante, tecnico,
+                                                categoria, prioridade):
+    """Sem data de encerramento não há como saber quando parou, então a
+    contagem corre até agora — e um cancelado antigo fora do prazo é
+    reconhecido como fora do prazo, em vez de derrubar a tela."""
+    chamado = _atrasar(abrir(solicitante, categoria, prioridade))
+    _legado_sem_data_de_encerramento(chamado, tecnico)
+
+    assert chamado.sla_estourado is True
+    assert chamado.horas_em_aberto >= chamado.prioridade.sla_horas
+
+
+def test_l06_painel_nao_quebra_com_cancelado_sem_data(app, solicitante, tecnico,
+                                                      categoria, prioridade):
+    """`taxa_dentro_do_sla` varre todos os chamados encerrados, sem filtrar por
+    data de encerramento — era o caminho mais curto até o 500 no painel."""
+    from app.services import indicadores_service
+
+    _legado_sem_data_de_encerramento(
+        abrir(solicitante, categoria, prioridade), tecnico)
+
+    taxa = indicadores_service.taxa_dentro_do_sla()
+    assert 0.0 <= taxa <= 100.0
+
+
+def test_l06_listagem_abre_com_chamado_cancelado_sem_data(client, autenticar,
+                                                          solicitante, tecnico,
+                                                          categoria, prioridade):
+    """O sintoma relatado, ponta a ponta: a listagem lê `sla_estourado` de cada
+    linha e devolvia 500 por causa de um único cancelado antigo."""
+    _legado_sem_data_de_encerramento(
+        abrir(solicitante, categoria, prioridade), tecnico)
+
+    autenticar("diego@teste.dev")
+    resposta = client.get("/chamados/")
+    assert resposta.status_code == 200
+
+
+def test_l06_painel_do_gestor_abre_com_cancelado_sem_data(client, autenticar,
+                                                          solicitante, tecnico,
+                                                          gestor, categoria,
+                                                          prioridade):
+    _legado_sem_data_de_encerramento(
+        abrir(solicitante, categoria, prioridade), tecnico)
+
+    autenticar("ana@teste.dev")
+    resposta = client.get("/painel/")
+    assert resposta.status_code == 200
+
+
+def test_l06_reabertura_continua_limpando_o_encerramento(app, solicitante, tecnico,
+                                                         categoria, prioridade):
+    """A condição de reabertura deixou de citar 'Resolvido' pelo nome e passou a
+    perguntar se o status encerra. O comportamento tem de ser o mesmo."""
+    chamado = abrir(solicitante, categoria, prioridade)
+    chamado_service.mudar_status(chamado, tecnico, "Em atendimento")
+    chamado_service.mudar_status(chamado, tecnico, "Resolvido",
+                                 solucao="Troquei o cabo de rede da impressora.")
+    assert chamado.data_encerramento is not None
+
+    chamado_service.mudar_status(chamado, tecnico, "Aberto")
+    assert chamado.data_encerramento is None
+    assert chamado.solucao is None
+
+
+def test_l06_cancelado_continua_sem_saida(app, solicitante, tecnico,
+                                          categoria, prioridade):
+    """Cancelado é terminal. Datar o cancelamento não pode ter aberto uma porta
+    de reabertura que o fluxo não prevê."""
+    chamado = _cancelar(abrir(solicitante, categoria, prioridade), tecnico)
+
+    with pytest.raises(ErroDeNegocio):
+        chamado_service.mudar_status(chamado, tecnico, "Aberto")
+    assert chamado.status.nome == "Cancelado"
