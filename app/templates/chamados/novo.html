@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "partials/macros.html" import erro_do_campo %}
 {% block titulo %}Abrir chamado{% endblock %}
 
 {% block conteudo %}
@@ -17,6 +18,7 @@
     <input type="text" id="titulo" name="titulo" value="{{ dados.titulo or '' }}"
            maxlength="120" required>
     <small class="campo__ajuda">Resuma o problema em uma frase (mínimo de 5 caracteres).</small>
+    {{ erro_do_campo('titulo', campo_erro, erro) }}
   </div>
 
   <div class="campo {% if campo_erro == 'descricao' %}campo--invalido{% endif %}">
@@ -26,6 +28,7 @@
       Explique o que aconteceu, quando começou e o que você já tentou
       (mínimo de 10 caracteres).
     </small>
+    {{ erro_do_campo('descricao', campo_erro, erro) }}
   </div>
 
   <div class="campo-duplo">
@@ -37,6 +40,7 @@
         <option value="{{ c.id }}" {% if dados.categoria_id == c.id|string %}selected{% endif %}>{{ c.nome }}</option>
         {% endfor %}
       </select>
+      {{ erro_do_campo('categoria_id', campo_erro, erro) }}
     </div>
 
     <div class="campo {% if campo_erro == 'prioridade_id' %}campo--invalido{% endif %}">
@@ -49,6 +53,7 @@
         </option>
         {% endfor %}
       </select>
+      {{ erro_do_campo('prioridade_id', campo_erro, erro) }}
     </div>
   </div>
 
@@ -56,6 +61,7 @@
     <label for="anexo">Anexo <span class="campo__opcional">(opcional)</span></label>
     <input type="file" id="anexo" name="anexo" multiple>
     <small class="campo__ajuda">Até 5 MB por arquivo. Prints de tela ajudam muito no atendimento.</small>
+    {{ erro_do_campo('anexo', campo_erro, erro) }}
     <p class="campo__erro-inline" data-erro-anexo hidden></p>
   </div>
 

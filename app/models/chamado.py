@@ -32,6 +32,8 @@ class Chamado(db.Model):
     data_abertura = db.Column(db.DateTime, nullable=False, default=agora)
     data_encerramento = db.Column(db.DateTime)
     solucao = db.Column(db.Text)
+    # L-04: obrigatória quando o chamado é encerrado com o prazo já estourado
+    justificativa_atraso = db.Column(db.Text)
 
     categoria = db.relationship("Categoria", back_populates="chamados")
     prioridade = db.relationship("Prioridade", back_populates="chamados")

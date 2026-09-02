@@ -76,6 +76,9 @@ CREATE TABLE chamado (
     data_abertura     TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
     data_encerramento TIMESTAMPTZ,
     solucao           TEXT,
+    -- L-04: motivo do atraso, exigido pela aplicação quando o chamado é
+    -- encerrado depois de vencido o prazo da prioridade
+    justificativa_atraso TEXT,
     -- A descrição precisa ter conteúdo real, não apenas espaços
     CONSTRAINT ck_chamado_descricao_minima CHECK (length(trim(descricao)) >= 10),
     CONSTRAINT ck_chamado_titulo_minimo    CHECK (length(trim(titulo))    >= 5),

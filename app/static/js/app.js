@@ -13,8 +13,11 @@
     focarCampoComErro();
     validarAnexo();
     campoSolucaoCondicional();
+    justificativaAtrasoCondicional();
     confirmarAcoes();
     evitarEnvioDuplicado();
+    filtrosRecolhiveis();
+    irParaResultados();
     animarBarras();
   });
 
@@ -107,6 +110,23 @@
     alternar();
   }
 
+  /* L-04: chamado com prazo estourado exige o motivo do atraso -------------- */
+  function justificativaAtrasoCondicional() {
+    const seletor = document.querySelector("[data-status-seletor]");
+    const campo = document.querySelector("[data-campo-atraso]");
+    if (!seletor || !campo) return;
+
+    function alternar() {
+      const resolvendo = seletor.value === "Resolvido";
+      campo.hidden = !resolvendo;
+      const area = campo.querySelector("textarea");
+      if (area) area.required = resolvendo;
+    }
+
+    seletor.addEventListener("change", alternar);
+    alternar();
+  }
+
   /* Ações que mudam o estado do chamado pedem confirmação ------------------- */
   function confirmarAcoes() {
     document.querySelectorAll("[data-confirmar]").forEach(function (form) {
@@ -121,13 +141,62 @@
   /* Feedback imediato: desabilita o botão e avisa que está processando ------ */
   function evitarEnvioDuplicado() {
     document.querySelectorAll("form").forEach(function (form) {
-      form.addEventListener("submit", function () {
+      form.addEventListener("submit", function (evento) {
         const botao = form.querySelector("[data-envio]");
         if (!botao || form.querySelector(":invalid")) return;
+
+        // L-01: um validador anterior pode ter cancelado o envio. Sem esta
+        // checagem, o botão ficava travado em "Enviando…" para sempre, porque
+        // preventDefault impede o envio mas não impede este listener de rodar.
+        if (evento.defaultPrevented) return;
+
+        botao.dataset.textoOriginal = botao.textContent;
         botao.disabled = true;
         botao.textContent = "Enviando…";
       });
     });
+  }
+
+  /* Filtros recolhíveis em telas pequenas ----------------------------------- */
+  /* L-02: no celular o formulário de filtros ocupava quase a tela inteira, e
+     os resultados só apareciam depois de rolar bastante — dando a impressão
+     de que o clique em "Filtrar" não tinha feito nada. */
+  function filtrosRecolhiveis() {
+    const form = document.querySelector("[data-filtros]");
+    const botao = document.querySelector("[data-filtros-alternar]");
+    if (!form || !botao) return;
+
+    function ehTelaPequena() {
+      return window.matchMedia("(max-width: 720px)").matches;
+    }
+
+    function aplicar(aberto) {
+      form.classList.toggle("filtros--recolhido", !aberto);
+      botao.setAttribute("aria-expanded", String(aberto));
+      botao.querySelector("[data-filtros-rotulo]").textContent =
+        aberto ? "Ocultar filtros" : "Mostrar filtros";
+    }
+
+    // começa recolhido no celular, a menos que algum filtro esteja em uso
+    const temFiltroAtivo = botao.dataset.filtrosAtivos === "1";
+    if (ehTelaPequena()) aplicar(temFiltroAtivo);
+
+    botao.addEventListener("click", function () {
+      aplicar(form.classList.contains("filtros--recolhido"));
+    });
+
+    window.addEventListener("resize", function () {
+      if (!ehTelaPequena()) aplicar(true);
+    });
+  }
+
+  /* Após filtrar no celular, leva a tela até os resultados ------------------- */
+  function irParaResultados() {
+    const alvo = document.querySelector("[data-resultados]");
+    if (!alvo) return;
+    if (!window.matchMedia("(max-width: 720px)").matches) return;
+    if (!window.location.search) return;   // só quando há filtro aplicado
+    alvo.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
   /* Barras do painel proporcionais ao maior valor da série ------------------ */

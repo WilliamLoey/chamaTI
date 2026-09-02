@@ -138,11 +138,31 @@ a:hover { color: var(--cor-primaria-escura); }
 .campo textarea { resize: vertical; }
 .campo__ajuda { display: block; color: var(--cor-texto-suave); font-size: .82rem; margin-top: 4px; }
 .campo__opcional { font-weight: 400; color: var(--cor-texto-suave); }
-.campo--invalido input, .campo--invalido select, .campo--invalido textarea {
-  border-color: var(--cor-erro); background: #fffafa;
+/* L-05: o realce anterior era uma borda de 1px que passava despercebida em
+   formulário longo. Agora o campo recusado ganha borda grossa, fundo tingido e
+   uma barra lateral vermelha, e a mensagem é repetida logo abaixo dele. */
+.campo--invalido {
+  border-left: 4px solid var(--cor-erro); border-radius: 4px;
+  padding: 8px 0 8px 12px; margin-left: -16px; background: #fff6f6;
 }
+.campo--invalido input, .campo--invalido select, .campo--invalido textarea {
+  border: 2px solid var(--cor-erro); background: #fffafa;
+}
+.campo--invalido input:focus, .campo--invalido select:focus,
+.campo--invalido textarea:focus { outline: 3px solid rgba(198, 40, 40, .3); }
 .campo--invalido label { color: var(--cor-erro); }
-.campo__erro-inline { color: var(--cor-erro); font-size: .85rem; margin: 6px 0 0; }
+.campo__erro-inline { color: var(--cor-erro); font-size: .85rem; font-weight: 600;
+                      margin: 6px 0 0; display: flex; align-items: center; gap: 6px; }
+.campo__erro-icone {
+  flex: none; width: 18px; height: 18px; border-radius: 50%;
+  background: var(--cor-erro); color: #fff; font-weight: 700; font-size: .78rem;
+  display: inline-flex; align-items: center; justify-content: center;
+}
+/* L-04: o campo do motivo do atraso não é erro, mas precisa chamar atenção. */
+.campo--atencao {
+  border-left: 4px solid #b26a00; background: #fff8ec;
+  border-radius: 4px; padding: 10px 0 10px 12px; margin-left: -16px;
+}
 .campo-duplo { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 
 /* Avisos e alertas -------------------------------------------------------- */
@@ -166,6 +186,17 @@ a:hover { color: var(--cor-primaria-escura); }
 .campo--linha { margin: 0; flex: 1 1 170px; }
 .filtros__acoes { display: flex; gap: 8px; align-items: center; }
 .resultado-contagem { color: var(--cor-texto-suave); font-size: .9rem; }
+
+/* L-02: em telas pequenas o formulário de filtros ocupava quase a tela inteira
+   e empurrava a lista para fora da primeira dobra. O botão abaixo só existe no
+   celular; no desktop os filtros continuam sempre visíveis. */
+.filtros-alternar { display: none; }
+.filtros.filtros--recolhido { display: none; }
+
+/* Bloco do motivo do atraso já resolvido ---------------------------------- */
+.justificativa { border-left: 4px solid #b26a00; background: #fff8ec;
+                 padding: 10px 14px; border-radius: 6px; margin-top: 16px; }
+.justificativa h3 { margin-top: 0; }
 
 /* Tabela ------------------------------------------------------------------ */
 .tabela-rolagem { overflow-x: auto; background: var(--cor-superficie);
@@ -269,6 +300,8 @@ a:hover { color: var(--cor-primaria-escura); }
 
 @media (max-width: 720px) {
   .campo-duplo { grid-template-columns: 1fr; }
+  .filtros-alternar { display: inline-flex; align-items: center; gap: 8px;
+                      width: 100%; justify-content: center; margin-bottom: 10px; }
   .menu-alternar { display: inline-block; }
   .menu { display: none; width: 100%; flex-direction: column; align-items: flex-start;
           gap: 10px; padding-bottom: 12px; }

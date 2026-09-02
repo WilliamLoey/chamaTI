@@ -196,7 +196,10 @@ def atribuir(chamado, gestor_ou_tecnico, tecnico):
     return chamado
 
 
-def mudar_status(chamado, autor, novo_status, solucao=None):
+JUSTIFICATIVA_MIN = 15
+
+
+def mudar_status(chamado, autor, novo_status, solucao=None, justificativa_atraso=None):
     atual = chamado.status.nome
     if novo_status == atual:
         raise ErroDeNegocio(f"O chamado já está com o status '{atual}'.")
@@ -212,11 +215,23 @@ def mudar_status(chamado, autor, novo_status, solucao=None):
             raise ErroDeNegocio(
                 f"Descreva a solução aplicada com pelo menos {SOLUCAO_MIN} caracteres "
                 "antes de encerrar o chamado.", campo="solucao")
+
+        # L-04: encerrar fora do prazo exige explicar o atraso. Sem isso, o
+        # indicador de SLA mostra que se atrasou, mas nunca por quê.
+        if chamado.sla_estourado:
+            if len(_limpar(justificativa_atraso)) < JUSTIFICATIVA_MIN:
+                raise ErroDeNegocio(
+                    "Este chamado está fora do prazo de atendimento. Descreva o motivo "
+                    f"do atraso com pelo menos {JUSTIFICATIVA_MIN} caracteres antes de "
+                    "encerrá-lo.", campo="justificativa_atraso")
+            chamado.justificativa_atraso = _limpar(justificativa_atraso)
+
         chamado.solucao = _limpar(solucao)
         chamado.data_encerramento = datetime.now(timezone.utc)
     if novo_status == STATUS_ABERTO and atual == STATUS_RESOLVIDO:
         chamado.data_encerramento = None
         chamado.solucao = None
+        chamado.justificativa_atraso = None
 
     chamado.status_id = _status(novo_status).id
     registrar(chamado, autor, f"Status alterado de '{atual}' para '{novo_status}'.",

@@ -9,7 +9,22 @@
 
 {% include "partials/campo_erro.html" %}
 
-<form class="filtros" method="get" action="{{ url_for('chamados.listar') }}">
+{# L-02: no celular o formulário de filtros ocupava quase a tela inteira e
+   empurrava os resultados para fora da primeira dobra — dando a impressão de
+   que clicar em "Filtrar" não tinha feito nada. Em telas pequenas ele começa
+   recolhido (a menos que já haja filtro em uso) e o JavaScript rola até os
+   resultados depois de filtrar. Sem JavaScript, tudo continua visível. #}
+{% set filtros_ativos = filtros.busca or filtros.status_id or filtros.prioridade_id
+                        or filtros.categoria_id or filtros.data_inicio or filtros.data_fim %}
+<button class="botao botao--secundario filtros-alternar" type="button"
+        aria-expanded="true" aria-controls="filtros-chamados"
+        data-filtros-alternar data-filtros-ativos="{{ '1' if filtros_ativos else '0' }}">
+  <span data-filtros-rotulo>Ocultar filtros</span>
+  {% if filtros_ativos %}<span class="etiqueta etiqueta--ok">em uso</span>{% endif %}
+</button>
+
+<form class="filtros" id="filtros-chamados" method="get"
+      action="{{ url_for('chamados.listar') }}" data-filtros>
   <div class="campo campo--linha">
     <label for="busca">Buscar</label>
     <input type="search" id="busca" name="busca" value="{{ filtros.busca }}"
@@ -52,7 +67,7 @@
   </div>
 </form>
 
-<p class="resultado-contagem">
+<p class="resultado-contagem" data-resultados tabindex="-1">
   {{ pagina.total }} chamado(s) encontrado(s).
   {% if pagina.pages > 1 %}Página {{ pagina.page }} de {{ pagina.pages }}.{% endif %}
 </p>
