@@ -78,6 +78,7 @@ Entidade central do sistema.
 | data_abertura | TIMESTAMPTZ | Padrão `NOW()` | Sim | — | Início da contagem do SLA |
 | data_encerramento | TIMESTAMPTZ | ≥ `data_abertura` (CHECK) | Não | — | Preenchida ao resolver/cancelar |
 | solucao | TEXT | Mín. 10 caracteres ao resolver (regra da aplicação) | Não | — | Causa e correção aplicada |
+| justificativa_atraso | TEXT | Mín. 15 caracteres quando o chamado é encerrado fora do prazo (regra da aplicação) | Não | — | Motivo do atraso; fica em branco quando o chamado é encerrado dentro do SLA |
 
 **Índices:** `ix_chamado_status`, `ix_chamado_data_abertura`, `ix_chamado_solicitante`,
 `ix_chamado_tecnico`, `ix_chamado_protocolo` — sustentam os filtros mais usados

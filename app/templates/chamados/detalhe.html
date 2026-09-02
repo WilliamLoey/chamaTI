@@ -34,6 +34,15 @@
         <p class="texto-preservado">{{ chamado.solucao }}</p>
       </div>
       {% endif %}
+
+      {% if chamado.justificativa_atraso %}
+      {# L-04: o indicador de SLA mostrava que o chamado atrasou, mas nunca
+         por quê. Agora o motivo fica registrado junto do chamado. #}
+      <div class="justificativa">
+        <h3>Motivo do atraso</h3>
+        <p class="texto-preservado">{{ chamado.justificativa_atraso }}</p>
+      </div>
+      {% endif %}
     </article>
 
     <article class="painel">
@@ -130,7 +139,21 @@
             (mínimo de 10 caracteres).</small>
         </div>
 
-        <button class="botao botao--primario botao--bloco" type="submit">Atualizar status</button>
+        {% if chamado.sla_estourado %}
+        {# L-04: encerrar fora do prazo passou a exigir explicação. O campo só
+           existe para o chamado que de fato atrasou — quem está no prazo não
+           precisa ver nem responder nada disso. #}
+        <div class="campo campo--atencao" data-campo-atraso hidden>
+          <label for="justificativa_atraso">Motivo do atraso</label>
+          <textarea id="justificativa_atraso" name="justificativa_atraso" rows="3"></textarea>
+          <small class="campo__ajuda">
+            Este chamado passou do prazo de atendimento. Explique o que causou o
+            atraso (mínimo de 15 caracteres) antes de encerrá-lo.
+          </small>
+        </div>
+        {% endif %}
+
+        <button class="botao botao--primario botao--bloco" type="submit" data-envio>Atualizar status</button>
       </form>
     </article>
     {% endif %}

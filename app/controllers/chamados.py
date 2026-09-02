@@ -182,9 +182,12 @@ def mudar_status(chamado_id):
     usuario = usuario_atual()
     try:
         chamado = chamado_service.obter(chamado_id, usuario)
-        chamado_service.mudar_status(chamado, usuario,
-                                     request.form.get("status", "").strip(),
-                                     solucao=request.form.get("solucao"))
+        chamado_service.mudar_status(
+            chamado, usuario,
+            request.form.get("status", "").strip(),
+            solucao=request.form.get("solucao"),
+            # L-04: só é exigida quando o chamado já passou do prazo
+            justificativa_atraso=request.form.get("justificativa_atraso"))
         flash("Status atualizado.", "sucesso")
     except PermissaoNegada as erro:
         return render_template("erros/403.html", mensagem=erro.mensagem), 403
