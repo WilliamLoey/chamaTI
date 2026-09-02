@@ -67,12 +67,22 @@ class Usuario(db.Model):
         return self.perfil == Perfil.SOLICITANTE
 
     def pode_ver_chamado(self, chamado) -> bool:
-        """Gestor vê tudo; técnico vê o que atende ou o que está sem dono;
-        solicitante vê apenas os próprios chamados."""
+        """Gestor vê tudo; solicitante vê apenas os próprios chamados.
+
+        V-07: até a versão 1.0, o técnico perdia o acesso ao chamado assim que
+        ele era reatribuído a outro colega — inclusive ao histórico que ele
+        próprio havia escrito. Agora ele continua enxergando os chamados em que
+        participou.
+        """
         if self.eh_gestor:
             return True
         if self.eh_tecnico:
-            return chamado.tecnico_id in (None, self.id) or chamado.solicitante_id == self.id
+            if chamado.tecnico_id in (None, self.id):
+                return True
+            if chamado.solicitante_id == self.id:
+                return True
+            # participou do atendimento em algum momento
+            return any(i.autor_id == self.id for i in chamado.interacoes)
         return chamado.solicitante_id == self.id
 
     def __repr__(self):
