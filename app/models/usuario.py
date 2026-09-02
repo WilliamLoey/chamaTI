@@ -21,6 +21,10 @@ class Perfil:
         GESTOR: "Gestor",
     }
 
+    @classmethod
+    def rotulo(cls, perfil: str) -> str:
+        return cls.ROTULOS.get(perfil, perfil)
+
 
 class Usuario(db.Model):
     __tablename__ = "usuario"

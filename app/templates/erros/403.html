@@ -6,9 +6,21 @@
   <p class="erro-pagina__codigo">403</p>
   <h1>Acesso negado</h1>
   <p>{{ mensagem }}</p>
+
+  {# L-03: os atalhos precisam corresponder ao perfil de quem está na tela.
+     Antes a página oferecia sempre os mesmos dois botões, e o gestor caía numa
+     listagem comum sem nenhum caminho de volta para o painel. #}
   <div class="erro-pagina__acoes">
-    <a class="botao botao--primario" href="{{ url_for('main.inicio') }}">Ir para o início</a>
-    <a class="botao botao--secundario" href="{{ url_for('chamados.listar') }}">Ver meus chamados</a>
+    {% if usuario %}
+      {% if usuario.eh_gestor %}
+      <a class="botao botao--primario" href="{{ url_for('painel.indicadores') }}">Ir para o painel</a>
+      {% endif %}
+      <a class="botao botao--secundario" href="{{ url_for('chamados.listar') }}">Ver meus chamados</a>
+      <a class="botao botao--texto" href="{{ url_for('main.inicio') }}">Início</a>
+    {% else %}
+      <a class="botao botao--primario" href="{{ url_for('auth.login_form') }}">Entrar</a>
+      <a class="botao botao--texto" href="{{ url_for('main.inicio') }}">Início</a>
+    {% endif %}
   </div>
 </section>
 {% endblock %}

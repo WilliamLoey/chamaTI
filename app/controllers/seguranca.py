@@ -38,10 +38,21 @@ def perfis_permitidos(*perfis):
                 return redirect(url_for("auth.login_form", proximo=request.path))
             if usuario.perfil not in perfis:
                 from flask import render_template
+                # L-03: dizer QUAL perfil está ativo e QUAL seria necessário.
+                # Sem isso, quem tem mais de uma conta (o caso comum de quem
+                # administra o sistema) vê "acesso negado" sem entender que o
+                # problema é estar logado na conta errada — e a página de erro
+                # ainda oferecia atalhos que não existem para o perfil atual.
+                exigidos = " ou ".join(Perfil.rotulo(p) for p in perfis)
                 return render_template(
                     "erros/403.html",
-                    mensagem="Esta área é restrita e o seu perfil não tem acesso a ela. "
-                             "Se você precisa dessa permissão, fale com o gestor da equipe."), 403
+                    mensagem=(
+                        f"Você está conectado como {usuario.nome}, com o perfil "
+                        f"{usuario.rotulo_perfil}. Esta área é restrita ao perfil "
+                        f"{exigidos}. Se você tem outra conta com essa permissão, "
+                        "saia e entre com ela; caso contrário, peça o acesso ao "
+                        "gestor da equipe."
+                    )), 403
             return view(*args, **kwargs)
         return wrapper
     return decorator
