@@ -228,7 +228,13 @@ def mudar_status(chamado, autor, novo_status, solucao=None, justificativa_atraso
 
         chamado.solucao = _limpar(solucao)
         chamado.data_encerramento = datetime.now(timezone.utc)
-    if novo_status == STATUS_ABERTO and atual == STATUS_RESOLVIDO:
+    # L-06: qualquer status que encerra precisa registrar quando encerrou.
+    # Antes, só 'Resolvido' gravava a data; 'Cancelado' encerrava o chamado
+    # deixando `data_encerramento` nula, o que quebrava o cálculo de SLA.
+    if _status(novo_status).encerra and chamado.data_encerramento is None:
+        chamado.data_encerramento = datetime.now(timezone.utc)
+
+    if novo_status == STATUS_ABERTO and _status(atual).encerra:
         chamado.data_encerramento = None
         chamado.solucao = None
         chamado.justificativa_atraso = None

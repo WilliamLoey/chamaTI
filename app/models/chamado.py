@@ -60,17 +60,30 @@ class Chamado(db.Model):
         return bool(self.status and self.status.encerra)
 
     @property
+    def _fim_da_contagem(self):
+        """Instante usado como fim no cálculo de SLA e de tempo em aberto.
+
+        L-06: nem todo chamado encerrado tem data de encerramento. O status
+        'Cancelado' encerra o chamado mas nunca preencheu `data_encerramento`,
+        e a comparação com None derrubava a listagem inteira com TypeError.
+        Sem data de encerramento, a contagem corre até agora.
+        """
+        if self.encerrado:
+            fim = self._aware(self.data_encerramento)
+            if fim is not None:
+                return fim
+        return agora()
+
+    @property
     def sla_estourado(self) -> bool:
         prazo = self.prazo_sla
         if prazo is None:
             return False
-        referencia = self._aware(self.data_encerramento) if self.encerrado else agora()
-        return referencia > prazo
+        return self._fim_da_contagem > prazo
 
     @property
     def horas_em_aberto(self):
-        fim = self._aware(self.data_encerramento) if self.encerrado else agora()
-        delta = fim - self._aware(self.data_abertura)
+        delta = self._fim_da_contagem - self._aware(self.data_abertura)
         return round(delta.total_seconds() / 3600, 1)
 
     @staticmethod
