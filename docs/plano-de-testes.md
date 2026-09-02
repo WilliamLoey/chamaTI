@@ -7,7 +7,7 @@ teste correspondente.
 
 ```mermaid
 flowchart LR
-    A[Escopo] -.verifica.-> A2[Teste de aceitação<br/>com 5 usuários]
+    A[Escopo] -.verifica.-> A2[Teste de aceitação<br/>com usuários]
     B[Requisitos] -.verifica.-> B2[Teste de sistema<br/>rotas HTTP]
     C[Arquitetura] -.verifica.-> C2[Teste de integração<br/>serviço + banco]
     D[Detalhamento] -.verifica.-> D2[Teste unitário<br/>regras de negócio]
@@ -24,7 +24,7 @@ Os dois termos são frequentemente confundidos, então vale a distinção explí
 | **Pergunta** | Estamos construindo o produto **corretamente**? | Estamos construindo o **produto certo**? |
 | **Quando** | Durante o desenvolvimento | Após o módulo estar pronto |
 | **Como** | Revisão de código, conferência com a especificação, testes automatizados | Teste de aceitação com usuários reais |
-| **Neste projeto** | 55 testes pytest + revisão da rastreabilidade requisito → código | 5 colegas usaram o sistema e preencheram o formulário de laudo |
+| **Neste projeto** | 103 testes pytest + revisão crítica do código, que encontrou 9 defeitos reais ([`verificacao-v1.md`](verificacao-v1.md)) | 5 testadores, 5 ocorrências relatadas e corrigidas ([`validacao-laudos.md`](validacao-laudos.md) e `laudos/`) |
 
 ## Níveis de teste
 
@@ -44,8 +44,10 @@ diretamente para a regra quebrada.
 | Arquivo | Testes | Cobre |
 |---|---:|---|
 | `test_rotas.py` | 16 | Login, logout, cadastro, abertura pela tela, permissões por URL, códigos HTTP, páginas de erro |
+| `test_verificacao_v2.py` | 27 | Regressão dos nove defeitos da **verificação**: escalada de privilégio, CSRF, anexos, fuso, concorrência |
+| `test_validacao_laudos.py` | 21 | Regressão das cinco ocorrências da **validação**: botão travado no anexo grande, filtros no celular, mensagem do 403, justificativa de atraso, erro junto do campo |
 
-**Total: 55 testes.**
+**Total: 103 testes.**
 
 ```bash
 pytest          # tudo
@@ -67,26 +69,30 @@ restrições barram dados inválidos:
 
 ### Teste de aceitação — com usuários
 
-Cinco colegas usaram o sistema hospedado e preencheram o formulário de
-[`laudos/formulario-de-teste.md`](../laudos/formulario-de-teste.md). Os
-resultados estão no [laudo de qualidade](../laudos/README.md).
+Os formulários estão prontos em [`laudos/`](../laudos/), um por testador, com
+perfil e roteiro próprios para que juntos cubram o sistema inteiro. Os
+resultados serão registrados no [laudo de qualidade](../laudos/README.md).
 
 ## Testes de regressão
 
-Todo defeito encontrado pelos testadores virou um teste automatizado antes de
-ser corrigido. Assim, o mesmo problema não retorna sem que a suíte acuse.
+Todo defeito encontrado vira um teste automatizado **antes** de ser corrigido.
+Assim o mesmo problema não retorna sem que a suíte acuse.
 
-| Defeito | Teste de regressão |
-|---|---|
-| E-01 — listagem sem paginação | `test_regressao_e01_listagem_e_paginada` |
-| E-02 — filtro por período excluía o dia final | `test_regressao_e02_filtro_inclui_o_dia_final` |
-| E-03 — anexo grande travava sem mensagem | `test_regressao_e03_anexo_acima_do_limite_e_recusado` |
-| E-04 — descrição só com espaços era aceita | `test_regressao_e04_descricao_so_com_espacos_e_recusada` |
-| E-04 — área restrita acessível por URL | `test_regressao_e04_painel_e_bloqueado_para_solicitante_via_url` |
+Os nove defeitos da verificação da versão 1.0 estão em
+[`docs/verificacao-v1.md`](verificacao-v1.md), e cada um tem seu teste em
+`tests/test_verificacao_v2.py`, identificado pelo código do defeito
+(`test_v01_…`, `test_v02_…`).
+
+```bash
+pytest tests/test_verificacao_v2.py -v
+```
+
+Os defeitos que os testadores relatarem seguirão o mesmo caminho: teste que
+reproduz o problema, correção, teste passando.
 
 ## Casos de teste manuais
 
-Roteiro usado na sessão de testes com os colegas.
+Roteiro dos testes manuais, também distribuído aos testadores.
 
 | ID | Cenário | Passos | Resultado esperado |
 |---|---|---|---|
@@ -107,8 +113,9 @@ Roteiro usado na sessão de testes com os colegas.
 
 ## Critérios de saída
 
-- [x] 100% dos testes automatizados passando
+- [x] 100% dos testes automatizados passando (82)
 - [x] Todo requisito funcional com ao menos um teste
-- [x] Todo defeito do laudo corrigido e com teste de regressão
+- [x] Todo defeito da verificação corrigido e com teste de regressão
 - [x] Nenhum defeito conhecido em aberto
-- [x] DDL validado contra PostgreSQL real
+- [x] DDL validado contra PostgreSQL 16 real
+- [ ] Testes de aceitação com usuários concluídos

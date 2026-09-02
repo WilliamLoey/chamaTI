@@ -56,7 +56,7 @@ projeto:
 |---|---|
 | Base de conhecimento | Depende de um volume de chamados resolvidos que ainda não existe |
 | Pesquisa de satisfação (CSAT) | Faz sentido apenas depois que o fluxo estiver em uso real |
-| Exportação de relatórios em PDF | O painel na tela já atende à necessidade imediata do gestor |
+| Exportação de relatórios em PDF | O painel na tela já atende à necessidade imediata do gestor. **Pedido de novo na validação** (laudo de Juliana, perfil Gestor): é o primeiro item da fase 2 |
 | Importação de usuários por CSV | Volume de usuários do piloto não justifica |
 | Notificação por e-mail | Exige serviço externo e configuração de domínio |
 | Aplicativo móvel nativo | A interface responsiva cobre o uso em celular |
