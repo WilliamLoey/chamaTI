@@ -1,3 +1,8 @@
+"""Regras de negócio parametrizáveis — fonte única de verdade.
+
+V-09: estes valores estavam duplicados entre app/config.py e os serviços.
+Passaram a viver aqui, e os dois lados importam deste módulo.
+"""
 from zoneinfo import ZoneInfo
 
 # Chamado
@@ -20,5 +25,6 @@ ITENS_POR_PAGINA = 25
 NOME_MIN = 3
 SENHA_MIN = 6
 
-
+# V-06: fuso usado para interpretar as datas que o usuário digita nos filtros.
+# Os dados continuam gravados em UTC; só a fronteira do dia é convertida.
 FUSO_LOCAL = ZoneInfo("America/Sao_Paulo")

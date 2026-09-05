@@ -7,3 +7,6 @@ python-dotenv==1.0.1
 psycopg2-binary==2.9.10
 gunicorn==23.0.0
 pytest==8.3.4
+
+# Só para gerar laudos/Laudo_de_Qualidade_ChamaTI.pdf
+reportlab==5.0.1

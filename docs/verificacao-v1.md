@@ -222,8 +222,11 @@ passaram a importar de lá.
 | Formulários com proteção CSRF | 0 de 7 | 7 de 7 |
 | Anexos efetivamente armazenados | não | sim |
 
-Todos os 82 testes passam. Os 27 novos falham no código da versão 1.0 e passam
-na 2.0 — é isso que os torna testes de regressão, e não apenas testes novos.
+A verificação fechou com esses 82 testes passando. Os 27 novos falham no código
+da versão 1.0 e passam na 2.0 — é isso que os torna testes de regressão, e não
+apenas testes novos. A suíte cresceu depois, na etapa de validação; o total de
+hoje está no [`README.md`](../README.md) e em
+[`plano-de-testes.md`](plano-de-testes.md).
 
 ```bash
 pytest -q                              # suíte completa

@@ -94,15 +94,15 @@ Senha para todas: `chamati123`
 pytest
 ```
 
-São **103 testes** cobrindo regras de negócio, permissões, validações, ciclo de
+São **113 testes** cobrindo regras de negócio, permissões, validações, ciclo de
 vida do chamado, indicadores e rotas HTTP.
 
-Destes, 48 são testes de regressão, divididos em duas frentes:
+Destes, 58 são testes de regressão, divididos em duas frentes:
 
 | Arquivo | Testes | Origem |
 |---|---|---|
 | `tests/test_verificacao_v2.py` | 27 | **Verificação** — os 9 defeitos que encontrei revisando a v1.0: escalada de privilégio no cadastro, ausência de CSRF, anexos descartados, fuso horário no filtro, protocolo duplicado sob concorrência e outros. Documentados em [`docs/verificacao-v1.md`](docs/verificacao-v1.md) |
-| `tests/test_validacao_laudos.py` | 21 | **Validação** — as 5 ocorrências relatadas pelos testadores. Documentadas em [`docs/validacao-laudos.md`](docs/validacao-laudos.md) |
+| `tests/test_validacao_laudos.py` | 31 | **Validação** — as 5 ocorrências relatadas pelos testadores (21) e a L-06, encontrada depois na revisão das correções (10). Documentadas em [`docs/validacao-laudos.md`](docs/validacao-laudos.md) e [`laudos/README.md`](laudos/README.md) |
 
 ## Documentação
 

@@ -24,7 +24,7 @@ Os dois termos são frequentemente confundidos, então vale a distinção explí
 | **Pergunta** | Estamos construindo o produto **corretamente**? | Estamos construindo o **produto certo**? |
 | **Quando** | Durante o desenvolvimento | Após o módulo estar pronto |
 | **Como** | Revisão de código, conferência com a especificação, testes automatizados | Teste de aceitação com usuários reais |
-| **Neste projeto** | 103 testes pytest + revisão crítica do código, que encontrou 9 defeitos reais ([`verificacao-v1.md`](verificacao-v1.md)) | 5 testadores, 5 ocorrências relatadas e corrigidas ([`validacao-laudos.md`](validacao-laudos.md) e `laudos/`) |
+| **Neste projeto** | 113 testes pytest + revisão crítica do código, que encontrou 9 defeitos reais ([`verificacao-v1.md`](verificacao-v1.md)) | 5 testadores, 5 ocorrências relatadas e corrigidas ([`validacao-laudos.md`](validacao-laudos.md) e `laudos/`) |
 
 ## Níveis de teste
 
@@ -45,9 +45,9 @@ diretamente para a regra quebrada.
 |---|---:|---|
 | `test_rotas.py` | 16 | Login, logout, cadastro, abertura pela tela, permissões por URL, códigos HTTP, páginas de erro |
 | `test_verificacao_v2.py` | 27 | Regressão dos nove defeitos da **verificação**: escalada de privilégio, CSRF, anexos, fuso, concorrência |
-| `test_validacao_laudos.py` | 21 | Regressão das cinco ocorrências da **validação**: botão travado no anexo grande, filtros no celular, mensagem do 403, justificativa de atraso, erro junto do campo |
+| `test_validacao_laudos.py` | 31 | Regressão das cinco ocorrências da **validação** (21): botão travado no anexo grande, filtros no celular, mensagem do 403, justificativa de atraso, erro junto do campo — mais a L-06 (10), o SLA do chamado cancelado, encontrada na revisão das correções |
 
-**Total: 103 testes.**
+**Total: 113 testes.**
 
 ```bash
 pytest          # tudo
@@ -113,9 +113,9 @@ Roteiro dos testes manuais, também distribuído aos testadores.
 
 ## Critérios de saída
 
-- [x] 100% dos testes automatizados passando (82)
+- [x] 100% dos testes automatizados passando (113)
 - [x] Todo requisito funcional com ao menos um teste
 - [x] Todo defeito da verificação corrigido e com teste de regressão
 - [x] Nenhum defeito conhecido em aberto
 - [x] DDL validado contra PostgreSQL 16 real
-- [ ] Testes de aceitação com usuários concluídos
+- [x] Testes de aceitação com usuários concluídos (5 testadores, 18 a 22 de agosto de 2026, formulários em `laudos/`)
