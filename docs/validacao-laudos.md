@@ -16,10 +16,17 @@ revisando o próprio código. São coisas diferentes:
 | Acha o quê | Regra errada, brecha de permissão, dado perdido | Confusão, atrito, expectativa frustrada |
 | Onde está | `docs/verificacao-v1.md` | este arquivo |
 
-Os cinco defeitos abaixo têm uma característica em comum: **nenhum deles seria
-encontrado por revisão de código ou por teste automatizado escrito por mim.**
-Todos são consequência de alguém esperar do sistema algo diferente do que eu
-assumi ao escrevê-lo. É exatamente o que a validação existe para pegar.
+Os cinco defeitos relatados pelos testadores têm uma característica em comum:
+**nenhum deles seria encontrado por revisão de código ou por teste automatizado
+escrito por mim.** Todos são consequência de alguém esperar do sistema algo
+diferente do que eu assumi ao escrevê-lo. É exatamente o que a validação existe
+para pegar.
+
+Há um sexto defeito no fim deste arquivo, a L-06, que não veio de laudo nenhum:
+apareceu depois, na revisão das cinco correções acima, na primeira vez que um
+chamado foi cancelado. Ele está registrado aqui porque é o contraexemplo dos
+outros cinco — o que escapa quando nem a verificação nem os roteiros de
+validação percorrem um caminho.
 
 ---
 
@@ -31,7 +38,7 @@ assumi ao escrevê-lo. É exatamente o que a validação existe para pegar.
 | Testadores | 5 |
 | Perfis cobertos | Solicitante (2), Técnico (2), Gestor (1) |
 | Ambientes | Windows/Chrome (3), Windows/Firefox (1), Android/Chrome (1) |
-| Formulários preenchidos | `laudos/laudo-01-roberta.docx` … `laudo-05-artur.docx` |
+| Formulários preenchidos | `laudos/Formulario_de_Teste_ChamaTI - <nome>.docx`, um por testador |
 
 | # | Testador | Perfil | Ambiente | Data |
 |---|---|---|---|---|
@@ -42,10 +49,13 @@ assumi ao escrevê-lo. É exatamente o que a validação existe para pegar.
 | 05 | Artur Rodrigues do Santos | Solicitante | Notebook Windows / Chrome | 18/08/2026 |
 
 Cada testador recebeu um roteiro diferente, para que juntos cobrissem o sistema
-inteiro em vez de repetirem o mesmo caminho feliz. Os cinco avaliaram
-facilidade, clareza, velocidade e aparência — e nos quatro quesitos a nota foi a
-máxima, o que torna os cinco achados abaixo ainda mais úteis: são o que sobrou
-quando a impressão geral já era boa.
+inteiro em vez de repetirem o mesmo caminho feliz. Os cinco avaliaram, de 1 a 5,
+facilidade de uso (média 4,2), clareza das mensagens (4,0), velocidade (4,0) e
+aparência (4,4) — média geral **4,15**, sem nenhuma nota abaixo de 3 e sem
+nenhum quesito com nota máxima unânime. As notas mais baixas não são ruído: os
+dois 3 em clareza e velocidade e o 3 do Rafael em facilidade de uso apontam
+exatamente para as ocorrências L-01, L-02 e L-05 descritas abaixo. A tabela
+completa, nota por testador, está em [`laudos/README.md`](../laudos/README.md).
 
 ---
 
@@ -281,13 +291,76 @@ validado.
 
 ---
 
+### L-06 · Cancelar um chamado derrubava a listagem com `TypeError`
+
+| | |
+|---|---|
+| Como apareceu | Não veio de laudo. Revisão das cinco correções acima, na primeira vez que um chamado foi cancelado |
+| Severidade | **Alta** — derruba a tela de entrada do sistema |
+| Situação | Corrigido |
+
+**O erro.** Cancelado o primeiro chamado, `GET /chamados/` passou a devolver
+500. O detalhe do chamado e o painel do gestor caíam pelo mesmo motivo, porque
+as três telas calculam SLA:
+
+```
+TypeError: '>' not supported between instances of 'NoneType' and 'datetime.datetime'
+```
+
+Uma única linha cancelada no banco bastava para derrubar a listagem inteira: o
+erro não estava no chamado cancelado, estava em quem tentava exibi-lo junto com
+os outros.
+
+**A causa.** Só o caminho "Resolvido" gravava `data_encerramento`. O status
+"Cancelado" também encerra o chamado — `Status.encerra` é `True` para os dois —,
+mas saía do serviço com a data nula. `sla_estourado` então comparava `None` com
+o prazo, e a comparação levantava `TypeError`.
+
+**A correção**, em duas metades:
+
+- Em `app/services/chamado_service.py`, `mudar_status` deixou de perguntar pelo
+  nome do status e passou a perguntar se ele encerra: qualquer status que encerra
+  grava a data. A guarda `is None` existe para não carimbar por cima da data que
+  o bloco de "Resolvido" já gravou.
+- Em `app/models/chamado.py`, o cálculo ganhou `_fim_da_contagem`, que tolera a
+  data ausente e conta até agora. Essa metade é necessária porque os chamados
+  cancelados **antes** da correção continuam no banco com o campo nulo — corrigir
+  só o serviço consertaria os cancelamentos futuros e deixaria a listagem
+  quebrada pelos antigos.
+
+`app/services/chamado_service.py`, `app/models/chamado.py`.
+
+**Testes.** Dez casos com o prefixo `test_l06_` em
+`tests/test_validacao_laudos.py`. Sete falham na versão anterior à correção —
+entre eles `::test_l06_cancelar_registra_a_data_de_encerramento`,
+`::test_l06_sla_de_encerrado_sem_data_nao_estoura_typeerror` e
+`::test_l06_listagem_abre_com_chamado_cancelado_sem_data`. Os outros três passam
+nas duas versões de propósito: `::test_l06_resolver_nao_teve_a_data_sobrescrita`,
+`::test_l06_reabertura_continua_limpando_o_encerramento` e
+`::test_l06_cancelado_continua_sem_saida` guardam o que a generalização do
+encerramento não podia quebrar.
+
+**O que ela ensina.** Este defeito passou pela verificação, pelos cinco
+testadores e por 103 testes automatizados, e sobreviveu a todos porque nenhum
+deles cancelou um chamado. Os roteiros dos testadores cobriam o atendimento; a
+suíte cobria abrir, atribuir, resolver e reabrir. Cancelar não estava em lugar
+nenhum — e foi exatamente ali que o defeito estava. Uma lacuna de cobertura não
+se anuncia: ela fica quieta até alguém andar por ela.
+
+---
+
 ## Resultado
 
 | | Antes | Depois |
 |---|---|---|
-| Defeitos abertos da validação | 5 | 0 |
-| Testes automatizados | 82 | 103 |
-| Testes de regressão da validação | — | 21 |
+| Defeitos abertos | 5 relatados pelos testadores + 1 encontrado na revisão das correções | 0 |
+| Testes automatizados | 82 | 113 |
+| Testes de regressão da validação | — | 31 |
+
+A suíte tem **113 testes** hoje. Dos 31 de regressão desta etapa, 21 cobrem as
+cinco ocorrências dos laudos e 10 cobrem a L-06 — o SLA do chamado cancelado —,
+que não veio de laudo nenhum. O resumo dos laudos está em
+[`laudos/README.md`](../laudos/README.md).
 
 ```bash
 pytest tests/test_validacao_laudos.py -v

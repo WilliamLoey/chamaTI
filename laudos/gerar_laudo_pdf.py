@@ -3,7 +3,7 @@
     python laudos/gerar_laudo_pdf.py
 
 O conteúdo das cinco opiniões é transcrito literalmente dos arquivos
-laudo-01-roberta.docx .. laudo-05-artur.docx desta mesma pasta.
+"Formulario_de_Teste_ChamaTI - <nome>.docx" desta mesma pasta.
 """
 from pathlib import Path
 
@@ -281,7 +281,7 @@ historia += [
         ["Testadores", "5 pessoas — 2 Solicitantes, 2 Técnicos e 1 Gestor"],
         ["Ambientes", "Windows/Chrome (3), Windows/Firefox (1), Android/Chrome (1)"],
         ["Ocorrências relatadas", "5 — todas corrigidas"],
-        ["Testes de regressão", "21 casos automatizados, um conjunto por ocorrência"],
+        ["Testes de regressão", "31 casos automatizados, um conjunto por ocorrência"],
     ], [4.2 * cm, L - 4.2 * cm]),
     Spacer(1, 0.7 * cm),
 ]
@@ -301,7 +301,7 @@ historia += [
         ["Encontra", "Regra errada, brecha de permissão, dado perdido",
          "Confusão, atrito, expectativa frustrada"],
         ["Resultado", "9 defeitos, corrigidos, com 27 testes",
-         "5 ocorrências, corrigidas, com 21 testes"],
+         "5 ocorrências, corrigidas, com 31 testes"],
         ["Documento", "docs/verificacao-v1.md", "este laudo e docs/validacao-laudos.md"],
     ], [2.6 * cm, (L - 2.6 * cm) / 2, (L - 2.6 * cm) / 2], cabecalho=True),
     Spacer(1, 0.35 * cm),
@@ -333,12 +333,16 @@ historia += [
     ], [1.3 * cm, 7.5 * cm, 3.6 * cm, 1.4 * cm, 2.8 * cm],
         cabecalho=True, negrito_primeira_coluna=False),
     Spacer(1, 0.3 * cm),
-    p("Nos quatro quesitos avaliados — facilidade de uso, clareza das mensagens, "
-      "velocidade e aparência — os cinco testadores atribuíram a nota máxima. As "
-      "cinco ocorrências acima são, portanto, o que sobrou depois de uma "
-      "impressão geral positiva: nenhuma impede o uso do sistema, e nenhuma "
-      "delas seria encontrada por revisão de código ou por teste automatizado "
-      "escrito por quem desenvolveu o sistema.", "corpo"),
+    p("Os quatro quesitos avaliados — facilidade de uso (média 4,2), clareza das "
+      "mensagens (4,0), velocidade (4,0) e aparência (4,4) — fecham em uma média "
+      "geral de <b>4,15</b> em 5. Nenhuma nota ficou abaixo de 3 e nenhum quesito "
+      "recebeu nota máxima unânime. As duas notas mais baixas não são ruído: o 3 "
+      "do Rafael em facilidade de uso é a L-02, os filtros ocupando a tela do "
+      "celular, e a clareza das mensagens, quesito de média mais baixa junto com "
+      "velocidade, é a L-01 e a L-05. As cinco ocorrências acima são, portanto, o "
+      "que sobrou depois de uma impressão geral positiva: nenhuma impede o uso do "
+      "sistema, e nenhuma delas seria encontrada por revisão de código ou por "
+      "teste automatizado escrito por quem desenvolveu o sistema.", "corpo"),
 ]
 
 historia += [p("3. As cinco opiniões, na íntegra", "h1")]
@@ -415,12 +419,16 @@ historia += [
     p("6. Conclusão", "h1"),
     p("As cinco ocorrências foram corrigidas e cada uma tem, no repositório, ao "
       "menos um teste automatizado que falha na versão anterior à correção e "
-      "passa na atual. A suíte passou de 82 para 103 testes.", "corpo"),
+      "passa na atual. A suíte passou de 82 para 113 testes: 21 desses casos "
+      "cobrem as cinco ocorrências dos laudos e 10 cobrem uma sexta, a L-06, que "
+      "não veio de testador nenhum — apareceu na revisão destas correções, na "
+      "primeira vez que um chamado foi cancelado, e está detalhada em "
+      "docs/validacao-laudos.md.", "corpo"),
     tabela([
         ["", "Antes da validação", "Depois"],
-        ["Ocorrências abertas", "5", "0"],
-        ["Testes automatizados", "82", "103"],
-        ["Testes de regressão da validação", "—", "21"],
+        ["Ocorrências abertas", "5 dos testadores + 1 encontrada na revisão", "0"],
+        ["Testes automatizados", "82", "113"],
+        ["Testes de regressão da validação", "—", "31"],
     ], [7.0 * cm, (L - 7.0 * cm) / 2, (L - 7.0 * cm) / 2], cabecalho=True),
     Spacer(1, 0.35 * cm),
     p("Vale registrar o padrão que os cinco relatos revelam quando lidos em "
