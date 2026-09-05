@@ -12,8 +12,8 @@ A interface evita jargão. O usuário lê "Aberto em" e não `created_at`; lê
 significa "SLA Médio".
 
 Todo campo tem `label` visível, e os que exigem algo específico trazem um texto
-de apoio abaixo: _"Explique o que aconteceu, quando começou e o que você já
-tentou (mínimo de 10 caracteres)"_.
+de apoio abaixo: *"Explique o que aconteceu, quando começou e o que você já
+tentou (mínimo de 10 caracteres)"*.
 
 ### Consistência
 
@@ -52,13 +52,13 @@ na tela seguinte.
 
 ### Feedback
 
-| Situação          | Resposta                                                             |
-| ----------------- | -------------------------------------------------------------------- |
-| Ação concluída    | Faixa verde com `role="status"` e `aria-live="polite"`               |
+| Situação | Resposta |
+|---|---|
+| Ação concluída | Faixa verde com `role="status"` e `aria-live="polite"` |
 | Erro de validação | Bloco vermelho com `role="alert"`, campo destacado e foco automático |
-| Processando       | Botão desabilitado, texto muda para "Enviando…"                      |
-| Lista vazia       | Estado vazio explicando o que fazer, com atalho para a ação          |
-| Sem permissão     | Página 403 explicando o motivo e oferecendo caminhos válidos         |
+| Processando | Botão desabilitado, texto muda para "Enviando…" |
+| Lista vazia | Estado vazio explicando o que fazer, com atalho para a ação |
+| Sem permissão | Página 403 explicando o motivo e oferecendo caminhos válidos |
 
 ### Estética
 
@@ -71,12 +71,12 @@ distingue certas cores.
 
 Toda mensagem segue a fórmula **o que aconteceu + como resolver**:
 
-| ❌ Antes (PIT I)     | ✅ Agora                                                                                                                  |
-| -------------------- | ------------------------------------------------------------------------------------------------------------------------- |
-| "Erro ao salvar"     | "A descrição deve ter pelo menos 10 caracteres. Explique o que aconteceu e o que você já tentou."                         |
-| "Arquivo inválido"   | "O arquivo 'print.png' tem 6,2 MB e o limite é 5 MB. Compacte o arquivo ou envie uma imagem menor."                       |
-| "Acesso negado"      | "Esta área é restrita e o seu perfil não tem acesso a ela. Se você precisa dessa permissão, fale com o gestor da equipe." |
-| "Transição inválida" | "Não é possível mudar de 'Aberto' para 'Resolvido'. Confira o fluxo de atendimento na documentação."                      |
+| ❌ Mensagem genérica | ✅ Padrão adotado |
+|---|---|
+| "Erro ao salvar" | "A descrição deve ter pelo menos 10 caracteres. Explique o que aconteceu e o que você já tentou." |
+| "Arquivo inválido" | "O arquivo 'print.png' tem 6,2 MB e o limite é 5 MB. Compacte o arquivo ou envie uma imagem menor." |
+| "Acesso negado" | "Esta área é restrita e o seu perfil não tem acesso a ela. Se você precisa dessa permissão, fale com o gestor da equipe." |
+| "Transição inválida" | "Não é possível mudar de 'Aberto' para 'Resolvido'. Confira o fluxo de atendimento na documentação." |
 
 A mensagem nasce na camada de serviço, já redigida para o usuário final, e
 carrega junto o nome do campo com problema — é isso que permite destacar o
@@ -92,8 +92,8 @@ sistema.
 
 Três pontos de quebra, verificados em 360 px, 768 px e 1280 px.
 
-A mudança mais relevante veio do teste com usuário: **em telas pequenas a
-tabela de chamados vira uma lista de cartões**. Cada célula passa a exibir seu
+A decisão mais relevante: **em telas pequenas a tabela de chamados vira uma
+lista de cartões**. Cada célula passa a exibir seu
 rótulo (via `data-rotulo` no HTML e `::before` no CSS), eliminando a rolagem
 horizontal.
 
@@ -104,16 +104,23 @@ toque tem no mínimo 44 px de altura.
 
 ## Acessibilidade
 
-| Item                  | Como foi resolvido                                       |
-| --------------------- | -------------------------------------------------------- |
-| Navegação por teclado | Ordem natural do DOM; nenhum `tabindex` positivo         |
-| Foco visível          | `:focus-visible` com contorno âmbar de 3 px              |
-| Pular para o conteúdo | Primeiro link da página, visível ao receber foco         |
-| Rótulos               | Todo campo tem `label` associado por `for`/`id`          |
-| Erros                 | `role="alert"` e foco programático no campo              |
-| Mensagens de status   | `role="status"` com `aria-live="polite"`                 |
-| HTML semântico        | `header`, `nav`, `main`, `footer`, `table` com `caption` |
-| Estrutura de títulos  | Um `h1` por página, hierarquia sem saltos                |
-| Contraste             | Texto principal 4,5:1 ou superior sobre o fundo          |
-| Movimento reduzido    | `prefers-reduced-motion` desliga as transições           |
-| Idioma                | `lang="pt-BR"` no documento                              |
+| Item | Como foi resolvido |
+|---|---|
+| Navegação por teclado | Ordem natural do DOM; nenhum `tabindex` positivo |
+| Foco visível | `:focus-visible` com contorno âmbar de 3 px |
+| Pular para o conteúdo | Primeiro link da página, visível ao receber foco |
+| Rótulos | Todo campo tem `label` associado por `for`/`id` |
+| Erros | `role="alert"` e foco programático no campo |
+| Mensagens de status | `role="status"` com `aria-live="polite"` |
+| HTML semântico | `header`, `nav`, `main`, `footer`, `table` com `caption` |
+| Estrutura de títulos | Um `h1` por página, hierarquia sem saltos |
+| Contraste | Texto principal 4,5:1 ou superior sobre o fundo |
+| Movimento reduzido | `prefers-reduced-motion` desliga as transições |
+| Idioma | `lang="pt-BR"` no documento |
+
+## Melhorias previstas
+
+As decisões acima vieram de análise e dos princípios do material teórico. A
+próxima rodada de ajustes virá dos **testes de aceitação** com usuários reais,
+cujos formulários estão em [`laudos/`](../laudos/) — usabilidade é justamente o
+tipo de problema que revisão de código não encontra.
