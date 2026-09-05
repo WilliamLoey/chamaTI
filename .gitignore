@@ -24,3 +24,6 @@ htmlcov/
 .idea/
 .DS_Store
 Thumbs.db
+
+# Gerado por laudos/gerar_laudo_pdf.py
+laudos/Laudo_de_Qualidade_ChamaTI.pdf
